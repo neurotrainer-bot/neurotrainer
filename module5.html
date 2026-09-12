@@ -1,0 +1,1808 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Модуль 5: Развитие персонала и делегирование</title>
+<style>
+  :root {
+    --bg: #0b0b1a;
+    --bg2: #12122a;
+    --bg3: #1a1a35;
+    --cyan: #00f0ff;
+    --cyan-dim: rgba(0,240,255,.12);
+    --green: #00ff88;
+    --green-dim: rgba(0,255,136,.12);
+    --red: #ff3366;
+    --red-dim: rgba(255,51,102,.12);
+    --yellow: #ffaa00;
+    --yellow-dim: rgba(255,170,0,.12);
+    --emerald: #10d49a;
+    --emerald-dim: rgba(16,212,154,.12);
+    --purple: #b366ff;
+    --purple-dim: rgba(179,102,255,.12);
+    --orange: #ff8844;
+    --orange-dim: rgba(255,136,68,.12);
+    --pink: #ff66aa;
+    --pink-dim: rgba(255,102,170,.12);
+    --text: #e0e0e8;
+    --text-dim: #7a7a9a;
+    --border: rgba(255,255,255,.08);
+    --radius: 16px;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(11,11,26,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .topbar-logo {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid var(--emerald);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(16,212,154,.25);
+  }
+  .topbar-logo svg { width: 20px; height: 20px; }
+  .topbar-info { flex: 1; min-width: 0; }
+  .topbar-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .topbar-progress {
+    width: 100%; height: 3px; background: rgba(255,255,255,.06);
+    border-radius: 99px; margin-top: 6px; overflow: hidden;
+  }
+  .topbar-progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--emerald), var(--cyan));
+    border-radius: 99px;
+    transition: width .6s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 0 8px var(--emerald);
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 0;
+  }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .sidebar.mobile-open { display: block; position: fixed; inset: 0; z-index: 200; background: var(--bg); padding: 20px; overflow-y: auto; }
+    .mobile-toggle { display: flex !important; }
+  }
+
+  .sidebar {
+    padding: 24px 16px;
+    border-right: 1px solid var(--border);
+    position: sticky; top: 70px;
+    height: calc(100dvh - 70px);
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-dim); margin-bottom: 16px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; margin-bottom: 4px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-dim);
+    transition: all .2s;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--bg2); color: var(--text); }
+  .nav-item.active {
+    background: var(--emerald-dim);
+    color: var(--emerald);
+    font-weight: 600;
+  }
+  .nav-item.completed::after {
+    content: '✓';
+    position: absolute; right: 12px;
+    color: var(--green); font-weight: 700;
+  }
+  .nav-num {
+    width: 24px; height: 24px; border-radius: 8px;
+    background: rgba(255,255,255,.05);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .nav-item.active .nav-num { background: var(--emerald); color: var(--bg); }
+  .nav-item.completed .nav-num { background: var(--green); color: var(--bg); }
+
+  .mobile-toggle {
+    display: none;
+    position: fixed; bottom: 20px; right: 20px; z-index: 150;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--emerald); color: var(--bg);
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(16,212,154,.4);
+    font-size: 24px; font-weight: 700;
+  }
+
+  .main { padding: 32px 28px 80px; min-height: calc(100dvh - 70px); }
+  @media (max-width: 600px) { .main { padding: 24px 18px 80px; } }
+
+  .section { display: none; animation: fadeUp .5s ease both; }
+  .section.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 32px; font-weight: 800; line-height: 1.2; margin-bottom: 12px; }
+  h1 span { color: var(--emerald); }
+  h2 { font-size: 22px; font-weight: 700; margin: 32px 0 16px; }
+  h3 { font-size: 17px; font-weight: 700; margin: 20px 0 10px; }
+  p { margin-bottom: 14px; font-size: 15px; }
+  .lead { font-size: 17px; color: var(--text-dim); margin-bottom: 24px; }
+
+  .tag {
+    display: inline-block;
+    padding: 5px 12px; border-radius: 99px;
+    background: var(--emerald-dim); color: var(--emerald);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-accent { border-left: 4px solid var(--emerald); }
+  .card-warn { border-left: 4px solid var(--yellow); background: var(--yellow-dim); }
+  .card-danger { border-left: 4px solid var(--red); background: var(--red-dim); }
+  .card-success { border-left: 4px solid var(--green); background: var(--green-dim); }
+  .card-purple { border-left: 4px solid var(--purple); background: var(--purple-dim); }
+  .card-orange { border-left: 4px solid var(--orange); background: var(--orange-dim); }
+  .card-pink { border-left: 4px solid var(--pink); background: var(--pink-dim); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: all .2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--emerald), #0ea572);
+    color: var(--bg);
+    box-shadow: 0 4px 20px rgba(16,212,154,.25);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(16,212,154,.35); }
+  .btn-secondary {
+    background: var(--bg3); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--emerald); color: var(--emerald); }
+  .btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+  /* ── Delegation Matrix 2x2 ── */
+  .matrix-container {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .matrix-axis-label {
+    font-size: 11px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+  .matrix-axis-x {
+    display: flex; justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+  .matrix-axis-y {
+    position: absolute;
+    left: -40px; top: 50%;
+    transform: rotate(-90deg);
+    transform-origin: left center;
+    white-space: nowrap;
+  }
+  .matrix-wrapper {
+    position: relative;
+    padding-left: 50px;
+  }
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    aspect-ratio: 1 / 1;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .matrix-cell {
+    background: var(--bg3);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all .3s;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+  }
+  .matrix-cell:hover {
+    border-color: var(--emerald);
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(16,212,154,.15);
+  }
+  .matrix-cell.active {
+    border-color: var(--emerald);
+    background: var(--emerald-dim);
+    box-shadow: 0 0 24px rgba(16,212,154,.25);
+  }
+  .matrix-cell-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+  .matrix-cell-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .matrix-cell-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .matrix-cell.c-instruct { border-top: 3px solid var(--cyan); }
+  .matrix-cell.c-coach { border-top: 3px solid var(--purple); }
+  .matrix-cell.c-auto { border-top: 3px solid var(--emerald); }
+  .matrix-cell.c-partner { border-top: 3px solid var(--orange); }
+
+  .matrix-detail {
+    background: linear-gradient(135deg, rgba(16,212,154,.06), rgba(0,240,255,.06));
+    border: 1px solid rgba(16,212,154,.2);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-top: 20px;
+    display: none;
+    animation: fadeUp .4s ease;
+  }
+  .matrix-detail.show { display: block; }
+  .matrix-detail-title {
+    font-size: 18px; font-weight: 800;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .matrix-detail-text {
+    font-size: 14.5px; line-height: 1.7;
+    margin-bottom: 14px;
+  }
+  .matrix-detail-list {
+    list-style: none;
+    margin-top: 10px;
+  }
+  .matrix-detail-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    display: flex; gap: 10px;
+  }
+  .matrix-detail-list li:last-child { border: none; }
+  .matrix-detail-list .bullet {
+    flex-shrink: 0;
+    color: var(--emerald);
+    font-weight: 700;
+  }
+
+  /* ── Styles Trainer ── */
+  .styles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 600px) { .styles-grid { grid-template-columns: 1fr; } }
+
+  .style-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all .3s;
+    position: relative;
+  }
+  .style-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .style-card.active {
+    border-color: var(--emerald);
+    background: var(--emerald-dim);
+  }
+  .style-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }
+  .style-name {
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .style-desc {
+    font-size: 13px; color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .style-when {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .style-when strong { color: var(--emerald); }
+
+  .trainer-scenario {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .trainer-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--emerald-dim);
+    color: var(--emerald);
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .trainer-situation {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .trainer-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 600px) { .trainer-options { grid-template-columns: 1fr; } }
+  .trainer-option {
+    padding: 14px 16px;
+    background: var(--bg3);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: left;
+    transition: all .2s;
+    color: var(--text);
+  }
+  .trainer-option:hover {
+    border-color: var(--emerald);
+    background: var(--emerald-dim);
+  }
+  .trainer-option.selected {
+    border-color: var(--emerald);
+    background: var(--emerald-dim);
+  }
+  .trainer-option.correct {
+    border-color: var(--green);
+    background: var(--green-dim);
+  }
+  .trainer-option.wrong {
+    border-color: var(--red);
+    background: var(--red-dim);
+  }
+
+  .trainer-feedback {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: none;
+    animation: fadeUp .4s ease;
+  }
+  .trainer-feedback.show { display: block; }
+  .trainer-feedback.good { background: var(--green-dim); border-left: 4px solid var(--green); }
+  .trainer-feedback.bad { background: var(--red-dim); border-left: 4px solid var(--red); }
+
+  .trainer-score {
+    background: linear-gradient(135deg, rgba(16,212,154,.08), rgba(0,240,255,.08));
+    border: 1px solid rgba(16,212,154,.2);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-top: 20px;
+    display: none;
+  }
+  .trainer-score.show { display: block; animation: fadeUp .5s ease; }
+  .trainer-score-value {
+    font-size: 48px; font-weight: 800;
+    background: linear-gradient(135deg, var(--emerald), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .trainer-score-label {
+    font-size: 13px; color: var(--text-dim);
+    margin-top: 4px; margin-bottom: 12px;
+  }
+
+  /* ── Simulator ── */
+  .sim-scenario {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .sim-speaker {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+    font-size: 13px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+  .sim-speaker-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--emerald-dim);
+    border: 1.5px solid var(--emerald);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .sim-quote {
+    font-size: 17px; font-style: italic;
+    line-height: 1.6; color: var(--text);
+    padding: 16px;
+    background: rgba(255,255,255,.02);
+    border-left: 3px solid var(--emerald);
+    border-radius: 8px;
+  }
+  .sim-choices { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  .sim-choice {
+    padding: 18px 20px;
+    background: var(--bg2);
+    border: 2px solid rgba(16,212,154,.2);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 15px; line-height: 1.6;
+    text-align: left;
+    transition: all .2s;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .sim-choice:hover:not(:disabled) {
+    border-color: var(--emerald);
+    background: var(--emerald-dim);
+    transform: translateX(4px);
+    box-shadow: 0 0 16px rgba(16,212,154,.15);
+  }
+  .sim-choice:disabled { cursor: default; opacity: .7; }
+  .sim-choice.correct { border-color: var(--green); background: var(--green-dim); opacity: 1 !important; color: var(--text); }
+  .sim-choice.wrong { border-color: var(--red); background: var(--red-dim); opacity: 1 !important; color: var(--text); }
+
+  .sim-feedback {
+    padding: 18px; margin-top: 16px;
+    border-radius: 12px;
+    font-size: 14px; line-height: 1.6;
+    display: none;
+    animation: fadeUp .4s ease;
+  }
+  .sim-feedback.show { display: block; }
+  .sim-feedback.good { background: var(--green-dim); border-left: 4px solid var(--green); }
+  .sim-feedback.bad { background: var(--red-dim); border-left: 4px solid var(--red); }
+
+  /* ── IDP Builder ── */
+  .idp-step {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 14px;
+  }
+  .idp-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--emerald); color: var(--bg);
+    font-weight: 800; font-size: 16px;
+    margin-right: 12px; vertical-align: middle;
+  }
+  .idp-title {
+    font-size: 16px; font-weight: 700;
+    display: inline-block; vertical-align: middle;
+  }
+  .idp-desc {
+    font-size: 13px; color: var(--text-dim);
+    margin: 10px 0 14px; line-height: 1.6;
+  }
+  .idp-textarea {
+    width: 100%; min-height: 70px;
+    background: var(--bg3);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px; line-height: 1.5;
+    resize: vertical;
+    transition: border-color .2s;
+  }
+  .idp-textarea:focus {
+    outline: none;
+    border-color: var(--emerald);
+  }
+  .idp-hint {
+    font-size: 12px; color: var(--text-dim);
+    margin-top: 8px; font-style: italic;
+  }
+
+  .idp-preview {
+    background: linear-gradient(135deg, rgba(16,212,154,.06), rgba(0,240,255,.06));
+    border: 1px solid rgba(16,212,154,.2);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-top: 20px;
+    display: none;
+  }
+  .idp-preview.show { display: block; animation: fadeUp .4s ease; }
+  .idp-preview-title {
+    font-size: 13px; color: var(--emerald);
+    font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .idp-preview-block {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .idp-preview-block:last-child { border: none; margin: 0; padding: 0; }
+  .idp-preview-label {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--emerald);
+    margin-bottom: 6px;
+  }
+  .idp-preview-text {
+    font-size: 14.5px; line-height: 1.7;
+    color: var(--text);
+  }
+
+  .copy-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: 8px;
+  }
+  .copy-btn:hover { border-color: var(--emerald); color: var(--emerald); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+  /* ── SMART Checker ── */
+  .smart-task {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .smart-textarea {
+    width: 100%; min-height: 90px;
+    background: var(--bg3);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px; line-height: 1.6;
+    resize: vertical;
+    transition: border-color .2s;
+  }
+  .smart-textarea:focus { outline: none; border-color: var(--emerald); }
+
+  .smart-checks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  @media (max-width: 500px) { .smart-checks { grid-template-columns: 1fr; } }
+
+  .smart-check {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px;
+    background: var(--bg3);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    transition: all .3s;
+  }
+  .smart-check.pass {
+    border-color: var(--green);
+    background: var(--green-dim);
+  }
+  .smart-check.fail {
+    border-color: var(--red);
+    background: var(--red-dim);
+  }
+  .smart-icon {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+    background: rgba(255,255,255,.05);
+    color: var(--text-dim);
+    transition: all .3s;
+  }
+  .smart-check.pass .smart-icon { background: var(--green); color: var(--bg); }
+  .smart-check.fail .smart-icon { background: var(--red); color: var(--bg); }
+
+  .smart-score {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg2);
+    border-radius: 12px;
+    text-align: center;
+  }
+  .smart-score-value {
+    font-size: 32px; font-weight: 800;
+    background: linear-gradient(135deg, var(--emerald), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .smart-score-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ── Script accordion ── */
+  .script-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .script-header {
+    padding: 16px 18px;
+    cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14.5px; font-weight: 600;
+    transition: background .2s;
+  }
+  .script-header:hover { background: var(--bg3); }
+  .script-arrow { transition: transform .3s; color: var(--emerald); }
+  .script-item.open .script-arrow { transform: rotate(180deg); }
+  .script-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+  .script-item.open .script-body { max-height: 1400px; }
+  .script-content {
+    padding: 0 18px 18px;
+    font-size: 14px; line-height: 1.7;
+    color: var(--text-dim);
+  }
+  .script-phrase {
+    background: rgba(16,212,154,.05);
+    border-left: 3px solid var(--emerald);
+    padding: 12px 14px;
+    margin: 10px 0;
+    border-radius: 8px;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  /* ── Final CTA ── */
+  .final-card {
+    background: linear-gradient(135deg, rgba(16,212,154,.08), rgba(179,102,255,.08));
+    border: 1px solid rgba(16,212,154,.2);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-top: 32px;
+  }
+  .final-card h2 { margin-top: 0; }
+
+  .hidden { display: none !important; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mb-16 { margin-bottom: 16px; }
+  .text-emerald { color: var(--emerald); }
+  .text-cyan { color: var(--cyan); }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-yellow { color: var(--yellow); }
+  .text-purple { color: var(--purple); }
+  .text-orange { color: var(--orange); }
+  .text-pink { color: var(--pink); }
+  .text-dim { color: var(--text-dim); }
+  .text-center { text-align: center; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- Кнопка возврата на dashboard -->
+<div style="position:fixed; top:14px; left:20px; z-index:200;">
+  <a href="index.html" style="
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px;
+    background:rgba(18,18,42,.9);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:99px;
+    color:#e0e0e8;
+    font-size:13px; font-weight:600;
+    text-decoration:none;
+    transition:all .2s;
+  " onmouseover="this.style.borderColor='var(--cyan)'; this.style.color='var(--cyan)'" 
+     onmouseout="this.style.borderColor='rgba(255,255,255,.08)'; this.style.color='#e0e0e8'">
+    ← К курсу
+  </a>
+</div>
+
+<!-- ═══════════════ TOP BAR ═══════════════ -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 64 64" fill="none">
+      <path d="M32 10 L32 54" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M32 10 L22 22" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M32 10 L42 22" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M32 24 L20 38" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M32 24 L44 38" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M32 38 L24 48" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M32 38 L40 48" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="topbar-info">
+    <div class="topbar-title">Модуль 5: Развитие персонала и делегирование</div>
+    <div class="topbar-sub" id="topSub">Раздел 1 из 6 · Введение</div>
+    <div class="topbar-progress"><div class="topbar-progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ LAYOUT ═══════════════ -->
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Содержание модуля</div>
+    <div class="nav-item active" data-section="0" onclick="goTo(0)">
+      <div class="nav-num">1</div><span>Введение</span>
+    </div>
+    <div class="nav-item" data-section="1" onclick="goTo(1)">
+      <div class="nav-num">2</div><span>Матрица делегирования</span>
+    </div>
+    <div class="nav-item" data-section="2" onclick="goTo(2)">
+      <div class="nav-num">3</div><span>4 стиля лидерства</span>
+    </div>
+    <div class="nav-item" data-section="3" onclick="goTo(3)">
+      <div class="nav-num">4</div><span>Симулятор: делегирование</span>
+    </div>
+    <div class="nav-item" data-section="4" onclick="goTo(4)">
+      <div class="nav-num">5</div><span>Конструктор IDP</span>
+    </div>
+    <div class="nav-item" data-section="5" onclick="goTo(5)">
+      <div class="nav-num">6</div><span>SMART-чекер + шаблоны</span>
+    </div>
+  </aside>
+
+  <button class="mobile-toggle" onclick="toggleMobile()">☰</button>
+
+  <main class="main">
+
+    <!-- ═══════ SECTION 0: INTRO ═══════ -->
+    <div class="section active" data-idx="0">
+      <div class="tag">Модуль 5 из 6</div>
+      <h1>Развитие персонала <span>и делегирование</span></h1>
+      <p class="lead">«Проще сделать самому» — самая дорогая фраза в управлении. Она стоит тебе роста команды, твоего времени и стратегических задач, которые ты никогда не успеешь. В этом модуле — система, которая превращает делегирование из боли в инструмент развития.</p>
+
+      <div class="card card-accent">
+        <h3 style="margin-top:0">🎯 Что ты получишь</h3>
+        <p style="margin-bottom:8px">• <strong>Матрицу делегирования 2x2</strong> — поймёшь, какую задачу кому и как делегировать</p>
+        <p style="margin-bottom:8px">• <strong>4 стиля лидерства</strong> — тренажёр, где научишься выбирать стиль под конкретного сотрудника</p>
+        <p style="margin-bottom:8px">• <strong>Симулятор «Делегирование сложной задачи»</strong> — прорепетируешь 3 реакции сотрудника</p>
+        <p style="margin-bottom:8px">• <strong>Конструктор IDP</strong> — соберёшь индивидуальный план развития для реального сотрудника</p>
+        <p>• <strong>SMART-чекер задач</strong> — проверишь свою постановку задачи на прочность</p>
+      </div>
+
+      <div class="card card-orange">
+        <h3 style="margin-top:0; color: var(--orange)">🎯 Главный принцип</h3>
+        <p style="margin-bottom:0">Делегирование — это <strong>не «сбросить задачу»</strong>. Это <strong>инструмент развития</strong>. Каждый раз, когда ты делегируешь правильно, сотрудник растёт. Каждый раз, когда делаешь сам — ты крадёшь у него возможность стать сильнее. А у себя — время на стратегию.</p>
+      </div>
+
+      <div class="card card-pink">
+        <h3 style="margin-top:0; color: var(--pink)">🧠 Почему ты не делегируешь</h3>
+        <p style="margin-bottom:8px">3 настоящие причины (не те, что ты себе говоришь):</p>
+        <p style="margin-bottom:8px">1. <strong>«Сделаю быстрее сам»</strong> — да, сегодня. Но через месяц ты всё ещё делаешь это сам. А сотрудник так и не научился.</p>
+        <p style="margin-bottom:8px">2. <strong>«Он сделает не так»</strong> — и это нормально. Ошибка — часть обучения. Твоя роль — не избежать ошибок, а создать безопасную среду для них.</p>
+        <p>3. <strong>«Я потеряю контроль»</strong> — ты не теряешь контроль, ты меняешь его тип: с микроменеджмента на метрики и результаты.</p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="goTo(1)">Начать модуль →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 1: DELEGATION MATRIX ═══════ -->
+    <div class="section" data-idx="1">
+      <div class="tag">Шаг 1</div>
+      <h1>Матрица <span>делегирования</span></h1>
+      <p class="lead">Кликай на ячейки — узнаешь, какой стиль делегирования применять в каждой ситуации. Это основа всего модуля.</p>
+
+      <div class="matrix-container">
+        <div class="matrix-wrapper">
+          <div class="matrix-axis-y matrix-axis-label">← Важность задачи</div>
+          <div class="matrix-axis-x">
+            <span class="matrix-axis-label">Низкая компетенция →</span>
+            <span class="matrix-axis-label">→ Высокая компетенция</span>
+          </div>
+          <div class="matrix-grid">
+            <div class="matrix-cell c-instruct" onclick="showMatrixDetail(0)">
+              <div class="matrix-cell-icon">📘</div>
+              <div class="matrix-cell-title">Инструктирование</div>
+              <div class="matrix-cell-sub">Новичок + рутина</div>
+            </div>
+            <div class="matrix-cell c-auto" onclick="showMatrixDetail(1)">
+              <div class="matrix-cell-icon">⚡</div>
+              <div class="matrix-cell-title">Автоматизация</div>
+              <div class="matrix-cell-sub">Эксперт + рутина</div>
+            </div>
+            <div class="matrix-cell c-coach" onclick="showMatrixDetail(2)">
+              <div class="matrix-cell-icon">🎯</div>
+              <div class="matrix-cell-title">Коучинг</div>
+              <div class="matrix-cell-sub">Новичок + стратегия</div>
+            </div>
+            <div class="matrix-cell c-partner" onclick="showMatrixDetail(3)">
+              <div class="matrix-cell-icon">🤝</div>
+              <div class="matrix-cell-title">Партнёрство</div>
+              <div class="matrix-cell-sub">Эксперт + стратегия</div>
+            </div>
+          </div>
+          <div class="matrix-axis-x" style="margin-top:10px; margin-bottom:0">
+            <span class="matrix-axis-label">Рутина ←</span>
+            <span class="matrix-axis-label">→ Стратегия</span>
+          </div>
+        </div>
+
+        <div class="matrix-detail" id="matrixDetail"></div>
+      </div>
+
+      <div class="card card-warn">
+        <h3 style="margin-top:0; color: var(--yellow)">⚠️ Главная ошибка</h3>
+        <p style="margin-bottom:0">Большинство руководителей застревают в левой колонке — инструктируют даже экспертов. Это называется <strong>микроменеджмент</strong>. Он убивает мотивацию сильных сотрудников и создаёт зависимость слабых. Твоя цель — двигать людей вправо (растёт компетенция) и вниз (берут на себя больше).</p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(0)">← Назад</button>
+        <button class="btn btn-primary" onclick="completeAndGo(2)">Дальше: 4 стиля лидерства →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 2: 4 STYLES ═══════ -->
+    <div class="section" data-idx="2">
+      <div class="tag">Шаг 2</div>
+      <h1>4 стиля <span>лидерства</span></h1>
+      <p class="lead">Изучи 4 стиля. Потом — тренажёр: 5 ситуаций, выбирай правильный стиль под конкретного сотрудника. Это навык, который прокачивается.</p>
+
+      <div class="styles-grid">
+        <div class="style-card" onclick="selectStyle(this, 0)">
+          <div class="style-icon">📘</div>
+          <div class="style-name">Инструктирование</div>
+          <div class="style-desc">Чёткие указания, контроль каждого шага. «Делай раз, делай два».</div>
+          <div class="style-when"><strong>Когда:</strong> новичок, новая задача, низкая компетенция</div>
+        </div>
+        <div class="style-card" onclick="selectStyle(this, 1)">
+          <div class="style-icon">🎯</div>
+          <div class="style-name">Коучинг</div>
+          <div class="style-desc">Объясняешь «зачем», задаёшь вопросы, развиваешь мышление.</div>
+          <div class="style-when"><strong>Когда:</strong> растущий сотрудник, нужна мотивация и развитие</div>
+        </div>
+        <div class="style-card" onclick="selectStyle(this, 2)">
+          <div class="style-icon">🤝</div>
+          <div class="style-name">Поддержка</div>
+          <div class="style-desc">Слушаешь, поддерживаешь, даёшь ресурсы. Решение — за ним.</div>
+          <div class="style-when"><strong>Когда:</strong> опытный, но выгорел / потерял мотивацию</div>
+        </div>
+        <div class="style-card" onclick="selectStyle(this, 3)">
+          <div class="style-icon">⚡</div>
+          <div class="style-name">Делегирование</div>
+          <div class="style-desc">Отдаёшь задачу полностью. Контроль — только по результату.</div>
+          <div class="style-when"><strong>Когда:</strong> эксперт, высокая мотивация, готов к вызову</div>
+        </div>
+      </div>
+
+      <h2>🎮 Тренажёр: выбери правильный стиль</h2>
+      <p class="text-dim">5 ситуаций. Для каждой — выбери стиль, который подходит лучше всего.</p>
+
+      <div id="trainerBox"></div>
+
+      <div class="trainer-score" id="trainerScore">
+        <div class="trainer-score-value" id="trainerScoreValue">—</div>
+        <div class="trainer-score-label">Правильных ответов</div>
+        <p class="text-dim" id="trainerScoreText" style="margin-top:12px"></p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(1)">← Назад</button>
+        <button class="btn btn-primary" onclick="completeAndGo(3)">Дальше: Симулятор →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 3: SIMULATOR ═══════ -->
+    <div class="section" data-idx="3">
+      <div class="tag">Шаг 3</div>
+      <h1>Симулятор: <span>делегирование сложной задачи</span></h1>
+      <p class="lead">3 ситуации, когда ты делегируешь ответственную задачу. Сотрудник реагирует по-разному. Выбирай ответ — получай разбор.</p>
+
+      <div id="simBox"></div>
+
+      <div class="btn-group" id="simNav">
+        <button class="btn btn-secondary" onclick="goTo(2)">← Назад</button>
+        <button class="btn btn-primary hidden" id="simNext" onclick="nextSimRound()">Следующая ситуация →</button>
+        <button class="btn btn-primary hidden" id="simFinish" onclick="completeAndGo(4)">Завершить модуль →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 4: IDP BUILDER ═══════ -->
+    <div class="section" data-idx="4">
+      <div class="tag">Шаг 4</div>
+      <h1>Конструктор <span>IDP</span></h1>
+      <p class="lead">IDP — Individual Development Plan. Персональный план развития сотрудника на 6-12 месяцев. Заполни поля для реального сотрудника — получишь готовый документ.</p>
+
+      <div class="card card-accent">
+        <h3 style="margin-top:0">📐 Структура IDP</h3>
+        <p style="margin-bottom:8px">Хороший IDP отвечает на 4 вопроса:</p>
+        <p style="margin-bottom:8px">1. <strong>Куда?</strong> — цель развития (конкретная, измеримая)</p>
+        <p style="margin-bottom:8px">2. <strong>Где сейчас?</strong> — текущий уровень (честно, с фактами)</p>
+        <p style="margin-bottom:8px">3. <strong>Как?</strong> — конкретные действия (обучение, проекты, менторство)</p>
+        <p>4. <strong>Как измерим?</strong> — критерии успеха (что будет доказательством роста)</p>
+      </div>
+
+      <div class="idp-step">
+        <div><span class="idp-num">1</span><span class="idp-title">Цель развития</span></div>
+        <div class="idp-desc">Чего сотрудник хочет достичь за 6-12 месяцев? Цель должна быть конкретной.</div>
+        <textarea class="idp-textarea" id="idpGoal" placeholder="Например: Вырасти до team lead'а и вести команду из 4 человек..." oninput="updateIdpPreview()"></textarea>
+        <div class="idp-hint">💡 Плохо: «Стать лучше». Хорошо: «Возглавить проект X и довести до релиза».</div>
+      </div>
+
+      <div class="idp-step">
+        <div><span class="idp-num">2</span><span class="idp-title">Текущий уровень</span></div>
+        <div class="idp-desc">Где он сейчас относительно цели? Факты, навыки, зоны роста.</div>
+        <textarea class="idp-textarea" id="idpCurrent" placeholder="Например: Сильный технический эксперт, но нет опыта управления людьми. Не проводил 1-on-1, не ставил задачи..." oninput="updateIdpPreview()"></textarea>
+        <div class="idp-hint">💡 Честно. Без приукрашивания. IDP — не для отчёта, а для реального роста.</div>
+      </div>
+
+      <div class="idp-step">
+        <div><span class="idp-num">3</span><span class="idp-title">Действия</span></div>
+        <div class="idp-desc">Что конкретно он будет делать? 3-5 пунктов с дедлайнами.</div>
+        <textarea class="idp-textarea" id="idpActions" placeholder="Например: 1) Пройти курс «Управление командой» до марта. 2) Взять менторство над джуном с февраля. 3) Провести 3 ретроспективы команды до апреля..." oninput="updateIdpPreview()"></textarea>
+        <div class="idp-hint">💡 70% обучения — на работе (проекты, вызовы). 20% — от других (менторы). 10% — курсы.</div>
+      </div>
+
+      <div class="idp-step">
+        <div><span class="idp-num">4</span><span class="idp-title">Критерии успеха</span></div>
+        <div class="idp-desc">Как ты и он поймёте, что цель достигнута? Измеримые показатели.</div>
+        <textarea class="idp-textarea" id="idpCriteria" placeholder="Например: 1) Команда из 4 человек работает стабильно 3+ месяца. 2) Проект X релизнут в срок. 3) eNPS команды > 30..." oninput="updateIdpPreview()"></textarea>
+        <div class="idp-hint">💡 Критерии должны быть объективными. Не «чувствую, что вырос», а «вот факты».</div>
+      </div>
+
+      <button class="btn btn-primary" onclick="showIdpPreview()">📄 Собрать IDP</button>
+
+      <div class="idp-preview" id="idpPreview">
+        <div class="idp-preview-title">🎯 Индивидуальный план развития</div>
+
+        <div class="idp-preview-block">
+          <div class="idp-preview-label">Цель (6-12 месяцев)</div>
+          <div class="idp-preview-text" id="previewGoal"></div>
+        </div>
+        <div class="idp-preview-block">
+          <div class="idp-preview-label">Текущий уровень</div>
+          <div class="idp-preview-text" id="previewCurrent"></div>
+        </div>
+        <div class="idp-preview-block">
+          <div class="idp-preview-label">Действия</div>
+          <div class="idp-preview-text" id="previewActions"></div>
+        </div>
+        <div class="idp-preview-block">
+          <div class="idp-preview-label">Критерии успеха</div>
+          <div class="idp-preview-text" id="previewCriteria"></div>
+        </div>
+
+        <button class="copy-btn" onclick="copyIdp(this)">📋 Скопировать IDP</button>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(3)">← Назад</button>
+        <button class="btn btn-primary" onclick="completeAndGo(5)">Дальше: SMART-чекер →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 5: SMART + TEMPLATES ═══════ -->
+    <div class="section" data-idx="5">
+      <div class="tag">Шаг 5-6</div>
+      <h1>SMART-чекер <span>+ шаблоны</span></h1>
+      <p class="lead">Проверь свою постановку задачи на прочность. И забери готовые шаблоны разговора о делегировании.</p>
+
+      <h2>🎯 SMART-чекер задач</h2>
+      <p class="text-dim">Напиши задачу, которую хочешь делегировать. Система проверит её по 5 критериям SMART.</p>
+
+      <div class="smart-task">
+        <textarea class="smart-textarea" id="smartInput" placeholder="Например: Подготовить отчёт по продажам за Q3 до пятницы, включить сравнение с прошлым годом и топ-5 клиентов..." oninput="checkSmart()"></textarea>
+      </div>
+
+      <div class="smart-checks" id="smartChecks">
+        <div class="smart-check" id="sc-s">
+          <div class="smart-icon">S</div>
+          <div><strong>Specific</strong><br><span class="text-dim" style="font-size:12px">Конкретная</span></div>
+        </div>
+        <div class="smart-check" id="sc-m">
+          <div class="smart-icon">M</div>
+          <div><strong>Measurable</strong><br><span class="text-dim" style="font-size:12px">Измеримая</span></div>
+        </div>
+        <div class="smart-check" id="sc-a">
+          <div class="smart-icon">A</div>
+          <div><strong>Achievable</strong><br><span class="text-dim" style="font-size:12px">Достижимая</span></div>
+        </div>
+        <div class="smart-check" id="sc-r">
+          <div class="smart-icon">R</div>
+          <div><strong>Relevant</strong><br><span class="text-dim" style="font-size:12px">Релевантная</span></div>
+        </div>
+        <div class="smart-check" id="sc-t">
+          <div class="smart-icon">T</div>
+          <div><strong>Time-bound</strong><br><span class="text-dim" style="font-size:12px">Ограниченная по времени</span></div>
+        </div>
+      </div>
+
+      <div class="smart-score">
+        <div class="smart-score-value" id="smartScore">0 / 5</div>
+        <div class="smart-score-label">Соответствие SMART</div>
+      </div>
+
+      <h2 class="mt-24">📜 Шаблоны разговора о делегировании</h2>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>🎬 Как делегировать сложную задачу</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <div class="script-phrase" id="t1">«[Имя], у меня есть задача, которую я хочу делегировать тебе. Это [название] — [краткое описание].
+
+Почему именно тебе: [конкретная причина — навык, опыт, зона роста].
+
+Что я ожидаю: [конкретный результат в цифрах/фактах].
+Дедлайн: [дата].
+Ресурсы: [что даёшь — время, доступ, поддержка].
+Контрольные точки: [когда проверяем прогресс].
+
+Что ты думаешь? Есть вопросы? Что нужно, чтобы справиться?»</div>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyText('t1', this)">📋 Скопировать</button>
+            <p class="text-dim" style="margin-top:12px"><strong>⚡ Ключевые моменты:</strong></p>
+            <p style="margin-bottom:6px">1. Объясни ПОЧЕМУ именно ему — это мотивирует.</p>
+            <p style="margin-bottom:6px">2. Дай понять, что это возможность роста, а не «сброс».</p>
+            <p>3. Обязательно спроси «что нужно?» — это партнёрская позиция.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>🔄 Если сотрудник говорит «это не моя зона»</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <div class="script-phrase" id="t2">«Я понимаю, что это выходит за твою привычную зону. Именно поэтому я хочу, чтобы ты взял это — это часть твоего роста.
+
+Давай так:
+1. Я не ожидаю, что ты сделаешь это идеально с первого раза.
+2. Мы договоримся о контрольных точках — я буду доступен для вопросов.
+3. Если увидишь, что не справляешься — скажи сразу, не тяни. Мы вместе найдём решение.
+
+Это не «сброс» — это инвестиция в тебя. Через 3 месяца ты будешь делать такие задачи легко.»</div>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyText('t2', this)">📋 Скопировать</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>⚠️ Если сотрудник сделал не так</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <div class="script-phrase" id="t3">«[Имя], давай разберём [задачу].
+
+Что получилось хорошо: [конкретно].
+Что нужно доработать: [конкретно, с фактами].
+
+Мой вопрос: как ты сам оцениваешь результат? Что бы ты сделал иначе?
+
+[Слушаешь ответ. Не перебиваешь.]
+
+Давай договоримся: [конкретные правки]. Когда сможешь принести исправленную версию?»</div>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyText('t3', this)">📋 Скопировать</button>
+            <p class="text-dim" style="margin-top:12px"><strong>⚡ Важно:</strong></p>
+            <p style="margin-bottom:6px">1. Начни с того, что получилось — это снижает защиту.</p>
+            <p style="margin-bottom:6px">2. Спроси его оценку — пусть сам найдёт ошибки.</p>
+            <p>3. Не говори «я же говорил» — это убивает желание брать задачи в будущем.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>📧 Шаблон follow-up после делегирования</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <div class="script-phrase" id="t4">Тема: Задача [название] — фиксация договорённостей
+
+[Имя], фиксирую, о чём договорились:
+
+📌 Задача: [описание]
+🎯 Ожидаемый результат: [конкретно]
+📅 Дедлайн: [дата]
+🔔 Контрольные точки: [даты]
+🛠 Ресурсы: [что даёшь]
+🆘 Эскалация: если что-то идёт не так — пиши/зови сразу, не тяни
+
+Я в тебя верю — именно поэтому дал эту задачу. Если появятся вопросы — я на связи.
+
+[Твоё имя]</div>
+            <button class="copy-btn" onclick="event.stopPropagation(); copyText('t4', this)">📋 Скопировать</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="final-card">
+        <h2>🎓 Модуль завершён</h2>
+        <p class="text-dim">Ты прошёл модуль, который меняет саму природу твоего управления. Теперь делегирование — это не «сброс задач», а инструмент развития команды. А развитие — это не «когда-нибудь», а конкретный IDP с дедлайнами.</p>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:20px">
+          <div style="padding:14px 20px; background:var(--bg2); border-radius:12px; border:1px solid var(--green)">
+            <div style="font-size:24px; font-weight:800; color:var(--green)">✓</div>
+            <div style="font-size:12px; color:var(--text-dim); margin-top:4px">Модуль 5 пройден</div>
+          </div>
+          <div style="padding:14px 20px; background:var(--bg2); border-radius:12px; border:1px solid var(--border)">
+            <div style="font-size:24px; font-weight:800; color:var(--text-dim)">1</div>
+            <div style="font-size:12px; color:var(--text-dim); margin-top:4px">модуль впереди</div>
+          </div>
+        </div>
+        <div class="btn-group" style="justify-content:center">
+          <button class="btn btn-primary" onclick="location.href='module6.html'">Следующий модуль →</button>
+          <button class="btn btn-secondary" onclick="goTo(0)">В начало модуля</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════ STATE ═══════════════════════ */
+const TOTAL_SECTIONS = 6;
+let currentSection = 0;
+let completedSections = new Set();
+let simRound = 0;
+let simScore = 0;
+let trainerAnswered = 0;
+let trainerCorrect = 0;
+
+try {
+  const saved = JSON.parse(localStorage.getItem('module5_progress') || '{}');
+  if (saved.completed) completedSections = new Set(saved.completed);
+} catch(e){}
+
+/* ═══════════════════════ NAVIGATION ═══════════════════════ */
+function goTo(idx) {
+  currentSection = idx;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.section[data-idx="${idx}"]`).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-section="${idx}"]`).classList.add('active');
+
+  const titles = ['Введение', 'Матрица делегирования', '4 стиля лидерства', 'Симулятор: делегирование', 'Конструктор IDP', 'SMART-чекер + шаблоны'];
+  document.getElementById('topSub').textContent = `Раздел ${idx+1} из ${TOTAL_SECTIONS} · ${titles[idx]}`;
+
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  if (idx === 2 && !trainerInited) initTrainer();
+  if (idx === 3 && simRound === 0) loadSimRound();
+
+  document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function completeAndGo(idx) {
+  completedSections.add(currentSection);
+  saveProgress();
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (completedSections.has(parseInt(n.dataset.section))) n.classList.add('completed');
+  });
+  goTo(idx);
+}
+
+function updateProgress() {
+  const pct = ((currentSection + 1) / TOTAL_SECTIONS) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('module5_progress', JSON.stringify({
+      completed: [...completedSections]
+    }));
+  } catch(e){}
+}
+
+function toggleMobile() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+/* ═══════════════════════ DELEGATION MATRIX ═══════════════════════ */
+const matrixData = [
+  {
+    icon: '📘',
+    title: 'Инструктирование',
+    color: 'var(--cyan)',
+    desc: 'Новичок + рутинная задача. Сотрудник ещё не знает, как делать — ты даёшь пошаговую инструкцию.',
+    when: 'Когда: первый раз делает задачу, нет опыта, нужна скорость.',
+    how: [
+      'Распиши задачу по шагам: «Делай раз, делай два»',
+      'Дай шаблон / пример готовой работы',
+      'Проверяй каждый этап, не жди финала',
+      'Хвали за следование инструкции — это формирует привычку',
+      'Через 2-3 повторения — переходи к коучингу'
+    ]
+  },
+  {
+    icon: '⚡',
+    title: 'Автоматизация',
+    color: 'var(--emerald)',
+    desc: 'Эксперт + рутина. Человек знает, как делать — просто отдай задачу полностью и не вмешивайся.',
+    when: 'Когда: опытный сотрудник, задача типовая, доверяешь на 100%.',
+    how: [
+      'Обозначь результат и дедлайн — не лезь в процесс',
+      'Договорись: «если что-то пойдёт не так — сигнализируй сразу»',
+      'Проверяй только финал, не промежуточные шаги',
+      'Используй освободившееся время для стратегических задач',
+      'Периодически спрашивай: «можно ли это автоматизировать ещё больше?»'
+    ]
+  },
+  {
+    icon: '🎯',
+    title: 'Коучинг',
+    color: 'var(--purple)',
+    desc: 'Новичок + стратегическая задача. Самый развивающий режим. Ты не даёшь ответов — ты задаёшь вопросы.',
+    when: 'Когда: растущий сотрудник, задача — вызов, цель — развить мышление.',
+    how: [
+      'Объясни «зачем» эта задача важна для бизнеса',
+      'Задай вопрос: «Как ты планируешь подходить?» — пусть думает сам',
+      'Давай обратную связь не на результат, а на подход',
+      'Разрешай ошибаться — ошибка = обучение',
+      'Контрольные точки: не «как дела?», а «какие выводы сделал?»'
+    ]
+  },
+  {
+    icon: '🤝',
+    title: 'Партнёрство',
+    color: 'var(--orange)',
+    desc: 'Эксперт + стратегическая задача. Вы вместе. Он — источник решений, ты — источник контекста и ресурсов.',
+    when: 'Когда: senior-специалист, сложная задача, нужно совместное решение.',
+    how: [
+      'Дай полный контекст: бизнес-цели, ограничения, стейкхолдеры',
+      'Спроси: «Как бы ты это решил, если бы был на моём месте?»',
+      'Обсуждай варианты на равных — он эксперт в своей области',
+      'Финальное решение — совместное, но ответственность — его',
+      'Публично признавай его вклад — это мотивирует сильнее денег'
+    ]
+  }
+];
+
+function showMatrixDetail(idx) {
+  const d = matrixData[idx];
+  document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.matrix-cell')[idx].classList.add('active');
+
+  let listHtml = '';
+  d.how.forEach(h => {
+    listHtml += `<li><span class="bullet">→</span>${h}</li>`;
+  });
+
+  document.getElementById('matrixDetail').innerHTML = `
+    <div class="matrix-detail-title" style="color:${d.color}">
+      <span style="font-size:28px">${d.icon}</span>
+      ${d.title}
+    </div>
+    <div class="matrix-detail-text">${d.desc}</div>
+    <div class="matrix-detail-text" style="color:var(--text-dim); font-size:13px"><strong style="color:${d.color}">${d.when}</strong></div>
+    <h3 style="margin-top:16px; color:${d.color}">Как применять:</h3>
+    <ul class="matrix-detail-list">${listHtml}</ul>
+  `;
+  document.getElementById('matrixDetail').classList.add('show');
+  playClick();
+}
+
+/* ═══════════════════════ STYLES TRAINER ═══════════════════════ */
+const trainerScenarios = [
+  {
+    tag: 'Ситуация 1',
+    text: '👤 <strong>Новичок</strong>, 2-й месяц в компании. Задача — настроить отчёт в CRM, которую он видит впервые.',
+    options: [
+      { t: '📘 Инструктирование — дать пошаговую инструкцию и проверить каждый шаг', correct: true,
+        fb: '✅ <strong>Точно.</strong> У него нет ментальной модели — ему нужна инструкция. Коучинг тут не сработает: он не знает, о чем думать. Делегирование — слишком рано. Дай чёткий алгоритм, проверь результат, похвали.' },
+      { t: '🎯 Коучинг — задать вопросы «как думаешь, как это сделать?»', correct: false,
+        fb: '❌ <strong>Слишком рано.</strong> Коучинг работает, когда есть база для размышлений. У новичка её нет — он будет чувствовать себя глупо. Сначала инструкция, потом — коучинг.' },
+      { t: '⚡ Делегирование — отдать задачу полностью, он разберётся', correct: false,
+        fb: '❌ <strong>Критическая ошибка.</strong> Он утонет. Потратит день на то, что ты объяснишь за 10 минут. И получит травму «я не справляюсь».' },
+      { t: '🤝 Партнёрство — сесть рядом и делать вместе', correct: false,
+        fb: '❌ <strong>Избыточно.</strong> Партнёрство — для экспертов. Новичку нужна ясность, а не совместное творчество. Ты потратишь 2 часа вместо 15 минут.' }
+    ]
+  },
+  {
+    tag: 'Ситуация 2',
+    text: '👤 <strong>Мидл-специалист</strong>, 2 года в компании. Хороший исполнитель, но не предлагает идей. Задача — улучшить процесс онбординга.',
+    options: [
+      { t: '📘 Инструктирование — расписать, что именно делать', correct: false,
+        fb: '❌ <strong>Слишком мелко.</strong> Он уже перерос инструкции. Так ты законсервируешь его в позиции «исполнителя» и убьёшь инициативу.' },
+      { t: '🎯 Коучинг — задать вопросы и развить его мышление', correct: true,
+        fb: '✅ <strong>Идеально.</strong> Он знает процесс, но не думает о его улучшении. Коучинг — именно то, что нужно: «Как бы ты это изменил?», «Что бесит новичков?», «Какие идеи ты видел у других?». Так ты растишь из него senior\'а.' },
+      { t: '⚡ Делегирование — «сделай как считаешь нужным»', correct: false,
+        fb: '❌ <strong>Преждевременно.</strong> Он не привык брать ответственность за процессы. Без коучинговой поддержки он либо сделает формально, либо замрёт.' },
+      { t: '🤝 Поддержка — просто спросить, как он, может, выгорел', correct: false,
+        fb: '❌ <strong>Не по адресу.</strong> Поддержка — для тех, кто потерял мотивацию. У него другая проблема — он не умеет думать стратегически. Это лечится коучингом.' }
+    ]
+  },
+  {
+    tag: 'Ситуация 3',
+    text: '👤 <strong>Senior-эксперт</strong>, 5 лет в компании. Тащит сложные проекты. Но в последние месяцы — выгорел, говорит «мне всё надоело».',
+    options: [
+      { t: '📘 Инструктирование — дать чёткий план, чтобы не думал лишнего', correct: false,
+        fb: '❌ <strong>Унизительно.</strong> Эксперт с 5-летним опытом, а ты с ним как с новичком. Он либо взбунтуется, либо уйдёт.' },
+      { t: '🎯 Коучинг — «давай найдём, что тебя драйвит»', correct: false,
+        fb: '❌ <strong>Не то.</strong> Коучинг — для развития. У него другая проблема — истощение. Ему нужна не «развивающая задача», а передышка и поддержка.' },
+      { t: '🤝 Поддержка — выслушать, дать ресурсы, пересмотреть нагрузку', correct: true,
+        fb: '✅ <strong>Точно.</strong> Выгорание лечится не вызовами, а восстановлением. Выслушай без советов. Спроси: «Что тебя истощает? Что даёт энергию?». Дай отпуск, сними рутину, перераспредели. Через месяц — вернёшься к коучингу.' },
+      { t: '⚡ Делегирование — «ты эксперт, сам разберёшься»', correct: false,
+        fb: '❌ <strong>Критическая ошибка.</strong> Он уже на грани. «Сам разберёшься» = «мне плевать». Через месяц получишь заявление. Выгоревшему нужна поддержка, а не автономия.' }
+    ]
+  },
+  {
+    tag: 'Ситуация 4',
+    text: '👤 <strong>Team lead</strong>, звезда компании. Готовится к повышению до Head of Department. Задача — разработать стратегию отдела на год.',
+    options: [
+      { t: '📘 Инструктирование — дать шаблон стратегии', correct: false,
+        fb: '❌ <strong>Убийство потенциала.</strong> Он готовится к роли, где нужно мыслить стратегически. Шаблон = ты делаешь его работу за него.' },
+      { t: '🎯 Коучинг — задавать наводящие вопросы', correct: false,
+        fb: '❌ <strong>Недостаточно.</strong> Он уже перерос коучинг. Ему не нужны вопросы — ему нужен контекст и партнёр для обсуждения.' },
+      { t: '🤝 Поддержка — дать ресурсы и не мешать', correct: false,
+        fb: '❌ <strong>Пассивно.</strong> Поддержка — для восстановления. Ему нужен вызов и совместная работа на равных.' },
+      { t: '⚡ Партнёрство — дать контекст и обсуждать на равных', correct: true,
+        fb: '✅ <strong>Идеально.</strong> Он готов к стратегии. Дай ему полный контекст: цели компании, бюджет, ограничения. Обсуждай варианты на равных. Финальное решение — совместное. Это именно та практика, которая готовит его к роли Head\'а.' }
+    ]
+  },
+  {
+    tag: 'Ситуация 5',
+    text: '👤 <strong>Сотрудник</strong>, который недавно получил повышение. Ещё не уверен в новой роли, но старается. Задача — провести первую ретроспективу команды.',
+    options: [
+      { t: '📘 Инструктирование + немного коучинга', correct: true,
+        fb: '✅ <strong>Точно.</strong> Он в переходной зоне: уже не новичок, но ещё не эксперт в новой роли. Дай инструкцию по механике ретро (шаги, тайминг, вопросы), но через коучинг помоги подумать: «Какие темы важны для команды? Что ты хочешь получить в итоге?».' },
+      { t: '⚡ Делегирование — он уже тимлид, сам справится', correct: false,
+        fb: '❌ <strong>Рискованно.</strong> Первая ретроспектива — это стресс. Без поддержки он либо сделает формально, либо провалит и потеряет уверенность. Нужно сопровождение.' },
+      { t: '🤝 Партнёрство — провести вместе', correct: false,
+        fb: '❌ <strong>Слишком много.</strong> Если ты проведёшь вместе — он не научится. Твоя роль — подготовить, а не делать за него.' },
+      { t: '🎯 Чистый коучинг — пусть сам придумает формат', correct: false,
+        fb: '❌ <strong>Избыточно.</strong> У него ещё нет опыта, чтобы придумывать с нуля. Дай базу (инструкция) + коучинг для адаптации под его команду. Это оптимальная комбинация.' }
+    ]
+  }
+];
+
+let trainerInited = false;
+
+function initTrainer() {
+  trainerInited = true;
+  const box = document.getElementById('trainerBox');
+  let html = '';
+  trainerScenarios.forEach((s, i) => {
+    html += `<div class="trainer-scenario" data-idx="${i}">
+      <div class="trainer-tag">${s.tag}</div>
+      <div class="trainer-situation">${s.text}</div>
+      <div class="trainer-options">`;
+    s.options.forEach((o, oi) => {
+      html += `<button class="trainer-option" data-si="${i}" data-oi="${oi}" onclick="pickTrainer(${i}, ${oi})">${o.t}</button>`;
+    });
+    html += `</div>
+      <div class="trainer-feedback" id="tf-${i}"></div>
+    </div>`;
+  });
+  box.innerHTML = html;
+}
+
+function pickTrainer(si, oi) {
+  const s = trainerScenarios[si];
+  const o = s.options[oi];
+  const btns = document.querySelectorAll(`.trainer-option[data-si="${si}"]`);
+
+  // Prevent re-answering
+  if (btns[0].disabled) return;
+  btns.forEach(b => b.disabled = true);
+
+  btns[oi].classList.add(o.correct ? 'correct' : 'wrong');
+  if (!o.correct) {
+    s.options.forEach((opt, i) => { if (opt.correct) btns[i].classList.add('correct'); });
+    playBad();
+  } else {
+    playGood();
+    trainerCorrect++;
+  }
+  trainerAnswered++;
+
+  const fb = document.getElementById(`tf-${si}`);
+  fb.className = `trainer-feedback show ${o.correct ? 'good' : 'bad'}`;
+  fb.innerHTML = o.fb;
+
+  if (trainerAnswered === trainerScenarios.length) {
+    showTrainerScore();
+  }
+}
+
+function selectStyle(el, idx) {
+  document.querySelectorAll('.style-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  playClick();
+}
+
+function showTrainerScore() {
+  const scoreEl = document.getElementById('trainerScore');
+  const valueEl = document.getElementById('trainerScoreValue');
+  const textEl = document.getElementById('trainerScoreText');
+
+  valueEl.textContent = `${trainerCorrect} / ${trainerScenarios.length}`;
+
+  let text = '';
+  if (trainerCorrect === 5) text = '🔥 Идеально! Ты читашь ситуации как книгу. Каждый сотрудник получит от тебя именно тот стиль, который нужен.';
+  else if (trainerCorrect >= 4) text = '👍 Отличный результат. У тебя сильное чутьё на людей. Осталось отшлифовать пару нюансов.';
+  else if (trainerCorrect >= 3) text = '👌 Хорошая база. Ты понимаешь логику, но иногда выбираешь «безопасный» стиль вместо нужного. Перечитай раздел про 4 стиля.';
+  else if (trainerCorrect >= 2) text = '⚠️ Есть над чем работать. Скорее всего, ты используешь один стиль для всех — а нужно адаптироваться. Пройди матрицу делегирования ещё раз.';
+  else text = '🚨 Нужно прокачивать. Ты путаешь стили — и это стоит тебе команды. Не расстраивайся: это навык, он тренируется. Вернись к началу модуля.';
+
+  textEl.textContent = text;
+  scoreEl.classList.add('show');
+  scoreEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+/* ═══════════════════════ SIMULATOR ═══════════════════════ */
+const simRounds = [
+  {
+    speaker: 'Сотрудник · боится брать задачу',
+    avatar: '😰',
+    quote: '«Слушай, я не уверен, что справлюсь. Это слишком сложно для меня. Может, лучше дать кому-то опытнее?»',
+    choices: [
+      { text: '«Я понимаю, что задача вызов. Именно поэтому я даю её тебе — я вижу, что ты готов расти. Давай разобьём на этапы и договоримся о поддержке.»', correct: true,
+        feedback: '✅ <strong>Точно.</strong> Ты признал его страх (снизил защиту), объяснил ПОЧЕМУ именно он (мотивация), и предложил конкретный план (безопасность). Идеальная комбинация для растущего сотрудника.' },
+      { text: '«Не бойся, всё получится! Ты же у нас молодец, справишься!»', correct: false,
+        feedback: '❌ <strong>Токсичный позитив.</strong> Ты обесценил его страх. «Не бойся» = «твои чувства — ерунда». Он либо согласится из-под палки и провалит, либо откажется и будет чувствовать себя виноватым.' },
+      { text: '«Ладно, тогда отдам задачу другому.»', correct: false,
+        feedback: '❌ <strong>Критическая ошибка.</strong> Ты только что научил его: достаточно сказать «не уверен» — и задачу заберут. В следующий раз он снова откажется. И так — до бесконечности. Ты убил его зону роста.' }
+    ]
+  },
+  {
+    speaker: 'Сотрудник · «Это не моя зона»',
+    avatar: '😒',
+    quote: '«Это не входит в мои обязанности. Я hired как разработчик, а не как аналитик. Почему я должен это делать?»',
+    choices: [
+      { text: '«Я понимаю, что это выходит за привычную зону. Именно поэтому я хочу, чтобы ты взял это — это часть твоего роста до senior\'а. Давай обсудим, какие ресурсы тебе нужны.»', correct: true,
+        feedback: '✅ <strong>Идеально.</strong> Ты признал его точку зрения, но вернул разговор к развитию. Связал задачу с ЕГО карьерной целью (senior) — это мотивирует. И перешёл в партнёрскую позицию: «какие ресурсы нужны?».' },
+      { text: '«Это приказ. Делай — и не задавай вопросов.»', correct: false,
+        fb: '❌ <strong>Авторитарность.</strong> Ты получил подчинение, но потерял мотивацию. Он сделает формально, без вовлечённости. И начнёт искать работу, где «не заставляют делать чужую работу».' },
+      { text: '«Ну окей, тогда не буду тебя нагружать. Найду другого.»', correct: false,
+        feedback: '❌ <strong>Сдался.</strong> Он понял: достаточно сослаться на job description — и руководитель отстанет. Теперь он будет использовать это как щит от любых новых задач. Ты создал прецедент.' }
+    ]
+  },
+  {
+    speaker: 'Сотрудник · сделал не так',
+    avatar: '😓',
+    quote: '(после того, как ты указал на ошибки): «Ну я же старался... Ты сам дал мне эту задачу, зная, что я не справлюсь. Это твоя вина.»',
+    choices: [
+      { text: '«Я ценю, что ты старался — это видно. Ошибки — часть обучения. Давай разберём, что конкретно пошло не так и как исправить. В следующий раз ты сделаешь это лучше.»', correct: true,
+        feedback: '✅ <strong>Точно.</strong> Ты признал его усилия (снизил защиту), нормализовал ошибки (безопасная среда), и переключил фокус на решение. Фраза «в следующий раз сделаешь лучше» — это инвестиция в его будущее, а не упрёк.' },
+      { text: '«Моя вина? Я тебе дал все ресурсы. Ты не слушал мои инструкции.»', correct: false,
+        feedback: '❌ <strong>Защитная реакция.</strong> Ты перешёл в режим «кто виноват». Это убивает доверие и желание брать задачи в будущем. Он запомнит не урок, а что «с тобой опасно работать».' },
+      { text: '«Извини, может, я действительно поторопился. Давай я сам доделаю.»', correct: false,
+        feedback: '❌ <strong>Ты проиграл.</strong> Ты взял задачу обратно — и он понял: достаточно обвинить руководителя — и тот сделает сам. В следующий раз он снова не будет стараться. Ты только что научил его безответственности.' }
+    ]
+  }
+];
+
+function loadSimRound() {
+  const r = simRounds[simRound];
+  const box = document.getElementById('simBox');
+
+  let html = `
+    <div class="sim-scenario">
+      <div class="sim-speaker">
+        <div class="sim-speaker-avatar">${r.avatar}</div>
+        <span>${r.speaker} · Ситуация ${simRound + 1} из ${simRounds.length}</span>
+      </div>
+      <div class="sim-quote">${r.quote}</div>
+      <div class="sim-choices" id="simChoices">
+  `;
+
+  r.choices.forEach((c, i) => {
+    html += `<button class="sim-choice" onclick="pickSim(${i})">${c.text}</button>`;
+  });
+
+  html += `</div></div><div class="sim-feedback" id="simFeedback"></div>`;
+  box.innerHTML = html;
+
+  document.getElementById('simNext').classList.add('hidden');
+  document.getElementById('simFinish').classList.add('hidden');
+}
+
+function pickSim(idx) {
+  const r = simRounds[simRound];
+  const choice = r.choices[idx];
+  const btns = document.querySelectorAll('.sim-choice');
+
+  btns.forEach(b => b.disabled = true);
+  btns[idx].classList.add(choice.correct ? 'correct' : 'wrong');
+  if (!choice.correct) {
+    r.choices.forEach((c, i) => { if (c.correct) btns[i].classList.add('correct'); });
+    playBad();
+  } else {
+    playGood();
+    simScore++;
+  }
+
+  const fb = document.getElementById('simFeedback');
+  fb.className = `sim-feedback show ${choice.correct ? 'good' : 'bad'}`;
+  fb.innerHTML = choice.feedback;
+
+  if (simRound < simRounds.length - 1) {
+    document.getElementById('simNext').classList.remove('hidden');
+  } else {
+    document.getElementById('simFinish').classList.remove('hidden');
+  }
+}
+
+function nextSimRound() {
+  simRound++;
+  loadSimRound();
+  window.scrollTo({ top: document.getElementById('simBox').offsetTop - 100, behavior: 'smooth' });
+}
+
+/* ═══════════════════════ IDP BUILDER ═══════════════════════ */
+function updateIdpPreview() {
+  if (document.getElementById('idpPreview').classList.contains('show')) {
+    showIdpPreview();
+  }
+}
+
+function showIdpPreview() {
+  const g = document.getElementById('idpGoal').value.trim();
+  const c = document.getElementById('idpCurrent').value.trim();
+  const a = document.getElementById('idpActions').value.trim();
+  const cr = document.getElementById('idpCriteria').value.trim();
+
+  if (!g || !c || !a || !cr) {
+    alert('Заполни все 4 поля, чтобы собрать IDP.');
+    return;
+  }
+
+  document.getElementById('previewGoal').textContent = g;
+  document.getElementById('previewCurrent').textContent = c;
+  document.getElementById('previewActions').textContent = a;
+  document.getElementById('previewCriteria').textContent = cr;
+
+  document.getElementById('idpPreview').classList.add('show');
+  document.getElementById('idpPreview').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  playGood();
+}
+
+function copyIdp(btn) {
+  const g = document.getElementById('idpGoal').value.trim();
+  const c = document.getElementById('idpCurrent').value.trim();
+  const a = document.getElementById('idpActions').value.trim();
+  const cr = document.getElementById('idpCriteria').value.trim();
+
+  const text = `ИНДИВИДУАЛЬНЫЙ ПЛАН РАЗВИТИЯ (IDP)
+
+🎯 ЦЕЛЬ (6-12 месяцев):
+${g}
+
+📍 ТЕКУЩИЙ УРОВЕНЬ:
+${c}
+
+🛠 ДЕЙСТВИЯ:
+${a}
+
+✅ КРИТЕРИИ УСПЕХА:
+${cr}
+
+Дата составления: ${new Date().toLocaleDateString('ru-RU')}
+Пересмотр через: 3 месяца`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Скопировано';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Скопировать IDP';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+/* ═══════════════════════ SMART CHECKER ═══════════════════════ */
+function checkSmart() {
+  const text = document.getElementById('smartInput').value.trim().toLowerCase();
+  let score = 0;
+
+  // S — Specific (конкретная)
+  // Ищем: что именно, конкретные объекты, имена, названия
+  const specificWords = ['отчёт', 'отчет', 'презентацию', 'документ', 'код', 'функци', 'модул', 'клиент', 'проект', 'анализ', 'список', 'таблиц', 'письм', 'релиз', 'запуск', 'настроить', 'сделать', 'подготовить', 'написать', 'разработать'];
+  const sPass = text.length > 30 && specificWords.some(w => text.includes(w));
+  setSmartCheck('s', sPass);
+  if (sPass) score++;
+
+  // M — Measurable (измеримая)
+  const measureWords = ['%', 'процент', 'штук', 'раз', 'больше', 'меньше', 'минимум', 'максимум', 'топ-', 'top-', 'цифр', 'количеств', 'сравнени', 'метри', 'kpi', 'ожидаем', 'результат'];
+  const numbers = /\d+/.test(text);
+  const mPass = (numbers || measureWords.some(w => text.includes(w))) && text.length > 20;
+  setSmartCheck('m', mPass);
+  if (mPass) score++;
+
+  // A — Achievable (достижимая)
+  // Нет явных признаков — проверяем, что задача не абсурдно большая
+  const impossibleWords = ['всё', 'полностью переделать', 'с нуля за день', 'невозможно'];
+  const aPass = !impossibleWords.some(w => text.includes(w)) && text.length > 15;
+  setSmartCheck('a', aPass);
+  if (aPass) score++;
+
+  // R — Relevant (релевантная)
+  const relevantWords = ['бизнес', 'продаж', 'клиент', 'команд', 'цел', 'задач', 'проек', 'цель', 'польз', 'компании', 'отдел', 'команд', 'сотрудник', 'развити', 'улучш'];
+  const rPass = relevantWords.some(w => text.includes(w)) && text.length > 20;
+  setSmartCheck('r', rPass);
+  if (rPass) score++;
+
+  // T — Time-bound (ограниченная по времени)
+  const timeWords = ['до', 'к', 'срок', 'завтра', 'недел', 'месяц', 'квартал', 'год', 'понедельник', 'вторник', 'сред', 'четверг', 'пятниц', 'суббот', 'воскресень', 'час', 'день', 'сегодня', 'q1', 'q2', 'q3', 'q4', 'январ', 'феврал', 'март', 'апрел', 'май', 'июн', 'июл', 'август', 'сентябр', 'октябр', 'ноябр', 'декабр'];
+  const tPass = timeWords.some(w => text.includes(w)) || /\d{1,2}[./-]\d{1,2}/.test(text);
+  setSmartCheck('t', tPass);
+  if (tPass) score++;
+
+  document.getElementById('smartScore').textContent = `${score} / 5`;
+}
+
+function setSmartCheck(letter, pass) {
+  const el = document.getElementById(`sc-${letter}`);
+  el.classList.remove('pass', 'fail');
+  if (pass) {
+    el.classList.add('pass');
+    el.querySelector('.smart-icon').textContent = '✓';
+  } else {
+    el.classList.add('fail');
+    el.querySelector('.smart-icon').textContent = '✗';
+  }
+}
+
+/* ═══════════════════════ SCRIPT ACCORDION ═══════════════════════ */
+function toggleScript(el) {
+  el.classList.toggle('open');
+}
+
+/* ═══════════════════════ COPY ═══════════════════════ */
+function copyText(id, btn) {
+  const el = document.getElementById(id);
+  const text = el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ Скопировано';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Скопировать';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+/* ═══════════════════════ AUDIO ═══════════════════════ */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playGood() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.06;
+    o.frequency.setValueAtTime(523, audioCtx.currentTime);
+    o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+    o.start(); o.stop(audioCtx.currentTime + 0.18);
+  } catch(e){}
+}
+function playBad() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.05;
+    o.frequency.setValueAtTime(180, audioCtx.currentTime);
+    o.start(); o.stop(audioCtx.currentTime + 0.22);
+  } catch(e){}
+}
+function playClick() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.03;
+    o.frequency.setValueAtTime(1200, audioCtx.currentTime);
+    o.start(); o.stop(audioCtx.currentTime + 0.03);
+  } catch(e){}
+}
+
+/* ═══════════════════════ INIT ═══════════════════════ */
+updateProgress();
+
+document.querySelectorAll('.nav-item').forEach(n => {
+  if (completedSections.has(parseInt(n.dataset.section))) n.classList.add('completed');
+});
+</script>
+</body>
+</html>

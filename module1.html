@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Модуль 1: Увольнение токсичного star-специалиста</title>
+<style>
+  :root {
+    --bg: #0b0b1a;
+    --bg2: #12122a;
+    --bg3: #1a1a35;
+    --cyan: #00f0ff;
+    --cyan-dim: rgba(0,240,255,.12);
+    --green: #00ff88;
+    --green-dim: rgba(0,255,136,.12);
+    --red: #ff3366;
+    --red-dim: rgba(255,51,102,.12);
+    --yellow: #ffaa00;
+    --yellow-dim: rgba(255,170,0,.12);
+    --purple: #b366ff;
+    --text: #e0e0e8;
+    --text-dim: #7a7a9a;
+    --border: rgba(255,255,255,.08);
+    --radius: 16px;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(11,11,26,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .topbar-logo {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid var(--cyan);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(0,240,255,.2);
+  }
+  .topbar-logo svg { width: 20px; height: 20px; }
+  .topbar-info { flex: 1; min-width: 0; }
+  .topbar-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .topbar-progress {
+    width: 100%; height: 3px; background: rgba(255,255,255,.06);
+    border-radius: 99px; margin-top: 6px; overflow: hidden;
+  }
+  .topbar-progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--green));
+    border-radius: 99px;
+    transition: width .6s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 0;
+  }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .sidebar.mobile-open { display: block; position: fixed; inset: 0; z-index: 200; background: var(--bg); padding: 20px; overflow-y: auto; }
+    .mobile-toggle { display: flex !important; }
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    padding: 24px 16px;
+    border-right: 1px solid var(--border);
+    position: sticky; top: 70px;
+    height: calc(100dvh - 70px);
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-dim); margin-bottom: 16px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; margin-bottom: 4px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-dim);
+    transition: all .2s;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--bg2); color: var(--text); }
+  .nav-item.active {
+    background: var(--cyan-dim);
+    color: var(--cyan);
+    font-weight: 600;
+  }
+  .nav-item.completed::after {
+    content: '✓';
+    position: absolute; right: 12px;
+    color: var(--green); font-weight: 700;
+  }
+  .nav-num {
+    width: 24px; height: 24px; border-radius: 8px;
+    background: rgba(255,255,255,.05);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .nav-item.active .nav-num { background: var(--cyan); color: var(--bg); }
+  .nav-item.completed .nav-num { background: var(--green); color: var(--bg); }
+
+  .mobile-toggle {
+    display: none;
+    position: fixed; bottom: 20px; right: 20px; z-index: 150;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--cyan); color: var(--bg);
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,240,255,.4);
+    font-size: 24px; font-weight: 700;
+  }
+
+  /* ── Main content ── */
+  .main { padding: 32px 28px 80px; min-height: calc(100dvh - 70px); }
+  @media (max-width: 600px) { .main { padding: 24px 18px 80px; } }
+
+  .section { display: none; animation: fadeUp .5s ease both; }
+  .section.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Typography ── */
+  h1 {
+    font-size: 32px; font-weight: 800;
+    line-height: 1.2; margin-bottom: 12px;
+  }
+  h1 span { color: var(--cyan); }
+  h2 {
+    font-size: 22px; font-weight: 700;
+    margin: 32px 0 16px;
+  }
+  h3 { font-size: 17px; font-weight: 700; margin: 20px 0 10px; }
+  p { margin-bottom: 14px; font-size: 15px; }
+  .lead { font-size: 17px; color: var(--text-dim); margin-bottom: 24px; }
+
+  .tag {
+    display: inline-block;
+    padding: 5px 12px; border-radius: 99px;
+    background: var(--cyan-dim); color: var(--cyan);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-accent {
+    border-left: 4px solid var(--cyan);
+  }
+  .card-warn {
+    border-left: 4px solid var(--yellow);
+    background: var(--yellow-dim);
+  }
+  .card-danger {
+    border-left: 4px solid var(--red);
+    background: var(--red-dim);
+  }
+  .card-success {
+    border-left: 4px solid var(--green);
+    background: var(--green-dim);
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: all .2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--cyan), #0088ff);
+    color: var(--bg);
+    box-shadow: 0 4px 20px rgba(0,240,255,.25);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,240,255,.35); }
+  .btn-secondary {
+    background: var(--bg3); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--cyan); color: var(--cyan); }
+  .btn-block { width: 100%; }
+  .btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+  /* ── Calculator ── */
+  .calc-field { margin-bottom: 20px; }
+  .calc-label {
+    display: flex; justify-content: space-between;
+    font-size: 14px; margin-bottom: 8px;
+  }
+  .calc-label-text { color: var(--text); font-weight: 500; }
+  .calc-label-value {
+    color: var(--cyan); font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .calc-slider {
+    width: 100%; height: 6px;
+    background: rgba(255,255,255,.08);
+    border-radius: 99px;
+    -webkit-appearance: none; appearance: none;
+    outline: none;
+  }
+  .calc-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--cyan); cursor: pointer;
+    box-shadow: 0 0 12px rgba(0,240,255,.5);
+    border: 3px solid var(--bg);
+  }
+  .calc-slider::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--cyan); cursor: pointer;
+    box-shadow: 0 0 12px rgba(0,240,255,.5);
+    border: 3px solid var(--bg);
+  }
+  .calc-hint { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+
+  .calc-result {
+    background: linear-gradient(135deg, rgba(255,51,102,.1), rgba(255,170,0,.1));
+    border: 1px solid rgba(255,51,102,.2);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align: center;
+    margin-top: 24px;
+  }
+  .calc-score {
+    font-size: 64px; font-weight: 800;
+    background: linear-gradient(135deg, var(--red), var(--yellow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .calc-score-label { font-size: 13px; color: var(--text-dim); margin-top: 6px; margin-bottom: 20px; }
+  .calc-cost {
+    font-size: 20px; font-weight: 700; color: var(--yellow);
+    padding-top: 16px; border-top: 1px solid var(--border);
+  }
+  .calc-cost-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ── Checklist ── */
+  .checklist-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 16px; margin-bottom: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .checklist-item:hover { border-color: var(--cyan); }
+  .checklist-item.checked {
+    border-color: var(--green);
+    background: var(--green-dim);
+  }
+  .checklist-item.checked .check-text { text-decoration: line-through; color: var(--text-dim); }
+  .check-box {
+    width: 24px; height: 24px; border-radius: 8px;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    font-size: 14px; color: transparent;
+  }
+  .checklist-item.checked .check-box {
+    background: var(--green); border-color: var(--green);
+    color: var(--bg);
+  }
+  .check-text { font-size: 14px; line-height: 1.5; flex: 1; }
+  .check-progress {
+    text-align: center; padding: 16px;
+    font-size: 14px; color: var(--text-dim);
+    background: var(--bg2); border-radius: 12px;
+    margin-top: 16px;
+  }
+  .check-progress strong { color: var(--cyan); font-size: 18px; }
+
+  /* ── Simulator ── */
+  .sim-scenario {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .sim-speaker {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+    font-size: 13px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+  .sim-speaker-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--red-dim);
+    border: 1.5px solid var(--red);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .sim-quote {
+    font-size: 17px; font-style: italic;
+    line-height: 1.6; color: var(--text);
+    padding: 16px;
+    background: rgba(255,255,255,.02);
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+  }
+  .sim-choices { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+  .sim-choice {
+    padding: 18px 20px;
+    background: var(--bg2);
+    border: 2px solid rgba(0,240,255,.2);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 15px; line-height: 1.6;
+    text-align: left;
+    transition: all .2s;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .sim-choice:hover:not(:disabled) {
+    border-color: var(--cyan);
+    background: var(--cyan-dim);
+    transform: translateX(4px);
+    box-shadow: 0 0 16px rgba(0,240,255,.15);
+  }
+  .sim-choice:disabled { cursor: default; opacity: .7; }
+  .sim-choice.correct { 
+    border-color: var(--green); 
+    background: var(--green-dim); 
+    opacity: 1 !important;
+    color: var(--text);
+  }
+  .sim-choice.wrong { 
+    border-color: var(--red); 
+    background: var(--red-dim); 
+    opacity: 1 !important;
+    color: var(--text);
+  }
+
+  .sim-feedback {
+    padding: 18px; margin-top: 16px;
+    border-radius: 12px;
+    font-size: 14px; line-height: 1.6;
+    display: none;
+    animation: fadeUp .4s ease;
+  }
+  .sim-feedback.show { display: block; }
+  .sim-feedback.good { background: var(--green-dim); border-left: 4px solid var(--green); }
+  .sim-feedback.bad { background: var(--red-dim); border-left: 4px solid var(--red); }
+
+  /* ── Script accordion ── */
+  .script-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .script-header {
+    padding: 16px 18px;
+    cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14.5px; font-weight: 600;
+    transition: background .2s;
+  }
+  .script-header:hover { background: var(--bg3); }
+  .script-arrow {
+    transition: transform .3s;
+    color: var(--cyan);
+  }
+  .script-item.open .script-arrow { transform: rotate(180deg); }
+  .script-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height .4s ease;
+  }
+  .script-item.open .script-body { max-height: 800px; }
+  .script-content {
+    padding: 0 18px 18px;
+    font-size: 14px; line-height: 1.7;
+    color: var(--text-dim);
+  }
+  .script-phrase {
+    background: rgba(0,240,255,.05);
+    border-left: 3px solid var(--cyan);
+    padding: 12px 14px;
+    margin: 10px 0;
+    border-radius: 8px;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  /* ── Final CTA ── */
+  .final-card {
+    background: linear-gradient(135deg, rgba(0,240,255,.08), rgba(179,102,255,.08));
+    border: 1px solid rgba(0,240,255,.2);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-top: 32px;
+  }
+  .final-card h2 { margin-top: 0; }
+
+  /* ── Utility ── */
+  .hidden { display: none !important; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mb-16 { margin-bottom: 16px; }
+  .text-cyan { color: var(--cyan); }
+  .text-green { color: var(--green); }
+  .text-red { color: var(--red); }
+  .text-yellow { color: var(--yellow); }
+  .text-dim { color: var(--text-dim); }
+  .text-center { text-align: center; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.2); }
+</style>
+</head>
+<body>
+
+<!-- Кнопка возврата на dashboard -->
+<div style="position:fixed; top:14px; left:20px; z-index:200;">
+  <a href="index.html" style="
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px;
+    background:rgba(18,18,42,.9);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:99px;
+    color:#e0e0e8;
+    font-size:13px; font-weight:600;
+    text-decoration:none;
+    transition:all .2s;
+  " onmouseover="this.style.borderColor='var(--cyan)'; this.style.color='var(--cyan)'" 
+     onmouseout="this.style.borderColor='rgba(255,255,255,.08)'; this.style.color='#e0e0e8'">
+    ← К курсу
+  </a>
+</div>
+
+<!-- ═══════════════ TOP BAR ═══════════════ -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 64 64" fill="none">
+      <circle cx="32" cy="24" r="10" stroke="var(--cyan)" stroke-width="2"/>
+      <circle cx="28" cy="22" r="1.5" fill="var(--cyan)"/>
+      <circle cx="36" cy="22" r="1.5" fill="var(--cyan)"/>
+      <path d="M28 27 Q32 31 36 27" stroke="var(--cyan)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <line x1="32" y1="34" x2="32" y2="40" stroke="var(--cyan)" stroke-width="2"/>
+    </svg>
+  </div>
+  <div class="topbar-info">
+    <div class="topbar-title" id="topTitle">Модуль 1: Увольнение токсичного star-специалиста</div>
+    <div class="topbar-sub" id="topSub">Раздел 1 из 6 · Введение</div>
+    <div class="topbar-progress"><div class="topbar-progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ LAYOUT ═══════════════ -->
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Содержание модуля</div>
+    <div class="nav-item active" data-section="0" onclick="goTo(0)">
+      <div class="nav-num">1</div><span>Введение</span>
+    </div>
+    <div class="nav-item" data-section="1" onclick="goTo(1)">
+      <div class="nav-num">2</div><span>Диагностика токсичности</span>
+    </div>
+    <div class="nav-item" data-section="2" onclick="goTo(2)">
+      <div class="nav-num">3</div><span>Документирование</span>
+    </div>
+    <div class="nav-item" data-section="3" onclick="goTo(3)">
+      <div class="nav-num">4</div><span>Подготовка к разговору</span>
+    </div>
+    <div class="nav-item" data-section="4" onclick="goTo(4)">
+      <div class="nav-num">5</div><span>Симулятор разговора</span>
+    </div>
+    <div class="nav-item" data-section="5" onclick="goTo(5)">
+      <div class="nav-num">6</div><span>Скрипт и после увольнения</span>
+    </div>
+  </aside>
+
+  <button class="mobile-toggle" onclick="toggleMobile()">☰</button>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- ═══════ SECTION 0: INTRO ═══════ -->
+    <div class="section active" data-idx="0">
+      <div class="tag">Модуль 1 из 6</div>
+      <h1>Увольнение <span>токсичного star-специалиста</span></h1>
+      <p class="lead">Самый сложный разговор в жизни руководителя. Ты теряешь KPI, но спасаешь команду. В этом модуле — 6 шагов, которые проведут тебя через процесс без суда, скандала и чувства вины.</p>
+
+      <div class="card card-accent">
+        <h3 style="margin-top:0">🎯 Что ты получишь в этом модуле</h3>
+        <p style="margin-bottom:8px">• <strong>Калькулятор токсичности</strong> — точно поймёшь, пора ли увольнять, или ещё можно спасти</p>
+        <p style="margin-bottom:8px">• <strong>Чек-лист документирования</strong> — соберёшь факты, чтобы исключить суд</p>
+        <p style="margin-bottom:8px">• <strong>Симулятор разговора</strong> — прорепетируешь 3 сложные реакции сотрудника</p>
+        <p style="margin-bottom:8px">• <strong>Готовый скрипт</strong> — с ветвлением под разные сценарии</p>
+        <p>• <strong>План объяснения команде</strong> — чтобы не потерять оставшихся</p>
+      </div>
+
+      <div class="card card-warn">
+        <h3 style="margin-top:0; color: var(--yellow)">⚠️ Важное предупреждение</h3>
+        <p style="margin-bottom:0">Этот модуль — не про «как избавиться от неудобного человека». Он про <strong>токсичного star-специалиста</strong>: того, кто тащит KPI, но разрушает команду изнутри. Если твой сотрудник просто сложный, но не токсичный — этот модуль тебе не нужен.</p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="goTo(1)">Начать модуль →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 1: DIAGNOSTICS ═══════ -->
+    <div class="section" data-idx="1">
+      <div class="tag">Шаг 1</div>
+      <h1>Диагностика <span>токсичности</span></h1>
+      <p class="lead">Прежде чем увольнять — убедись, что человек действительно токсичен, а не просто сложный. Калькулятор ниже оценит ситуацию по 5 параметрам и покажет, сколько он реально стоит компании.</p>
+
+      <div class="card">
+        <h3 style="margin-top:0">📊 Калькулятор индекса токсичности</h3>
+        <p class="text-dim" style="font-size:13px">Двигай ползунки. Чем выше значения — тем критичнее ситуация.</p>
+
+        <div class="calc-field">
+          <div class="calc-label">
+            <span class="calc-label-text">1. Частота срывов на коллег</span>
+            <span class="calc-label-value" id="v1-val">5 / 10</span>
+          </div>
+          <input type="range" min="0" max="10" value="5" class="calc-slider" id="v1" oninput="updateCalc()">
+          <div class="calc-hint">Как часто он повышает голос, обесценивает, унижает?</div>
+        </div>
+
+        <div class="calc-field">
+          <div class="calc-label">
+            <span class="calc-label-text">2. Критичность его роли</span>
+            <span class="calc-label-value" id="v2-val">7 / 10</span>
+          </div>
+          <input type="range" min="0" max="10" value="7" class="calc-slider" id="v2" oninput="updateCalc()">
+          <div class="calc-hint">Насколько команда зависит от него напрямую?</div>
+        </div>
+
+        <div class="calc-field">
+          <div class="calc-label">
+            <span class="calc-label-text">3. Ушедшие из-за него новички</span>
+            <span class="calc-label-value" id="v3-val">1</span>
+          </div>
+          <input type="range" min="0" max="10" value="1" class="calc-slider" id="v3" oninput="updateCalc()">
+          <div class="calc-hint">Сколько людей уволилось за последний год, назвав его причиной?</div>
+        </div>
+
+        <div class="calc-field">
+          <div class="calc-label">
+            <span class="calc-label-text">4. Твоё время на «тушение»</span>
+            <span class="calc-label-value" id="v4-val">4 ч/нед</span>
+          </div>
+          <input type="range" min="0" max="20" value="4" class="calc-slider" id="v4" oninput="updateCalc()">
+          <div class="calc-hint">Сколько часов в неделю ты тратишь на разбор его конфликтов?</div>
+        </div>
+
+        <div class="calc-field">
+          <div class="calc-label">
+            <span class="calc-label-text">5. Влияние на мораль команды</span>
+            <span class="calc-label-value" id="v5-val">6 / 10</span>
+          </div>
+          <input type="range" min="0" max="10" value="6" class="calc-slider" id="v5" oninput="updateCalc()">
+          <div class="calc-hint">Насколько его присутствие демотивирует остальных?</div>
+        </div>
+
+        <div class="calc-field">
+          <div class="calc-label">
+            <span class="calc-label-text">6. Твоя hourly-ставка (для расчёта потерь)</span>
+            <span class="calc-label-value" id="v6-val">2500 ₽/ч</span>
+          </div>
+          <input type="range" min="500" max="15000" step="100" value="2500" class="calc-slider" id="v6" oninput="updateCalc()">
+          <div class="calc-hint">Сколько стоит час твоей работы? Нужно для оценки потерь.</div>
+        </div>
+
+        <div class="calc-result" id="calcResult">
+          <div class="calc-score" id="toxScore">68%</div>
+          <div class="calc-score-label">Индекс токсичности</div>
+          <div class="calc-cost" id="toxCost">~ 1 240 000 ₽ / год</div>
+          <div class="calc-cost-label">Совокупные потери компании</div>
+        </div>
+      </div>
+
+      <div class="card" id="verdictCard">
+        <h3 style="margin-top:0" id="verdictTitle">🟡 Вердикт Нейро-Тренера</h3>
+        <p id="verdictText">Ситуация на грани. Сотрудник ещё может быть спасён, но только при жёстком плане исправления. Если за 30 дней нет прогресса — увольняй.</p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(0)">← Назад</button>
+        <button class="btn btn-primary" onclick="completeAndGo(2)">Дальше: Документирование →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 2: DOCUMENTATION ═══════ -->
+    <div class="section" data-idx="2">
+      <div class="tag">Шаг 2</div>
+      <h1>Документирование <span>фактов</span></h1>
+      <p class="lead">Суд выигрывает тот, у кого больше бумаг. Прежде чем идти на разговор — собери доказательную базу. Отмечай выполненное, прогресс сохраняется.</p>
+
+      <div class="card card-warn">
+        <h3 style="margin-top:0; color: var(--yellow)">📌 Золотое правило</h3>
+        <p style="margin-bottom:0">Фиксируй <strong>факты, а не интерпретации</strong>. Не «он токсичный», а «12 марта на планёрке повысил голос на Иванова, назвал его работу "мусором" в присутствии 6 человек».</p>
+      </div>
+
+      <h2>Чек-лист документирования</h2>
+
+      <div id="checklist">
+        <div class="checklist-item" onclick="toggleCheck(this, 0)">
+          <div class="check-box">✓</div>
+          <div class="check-text"><strong>Письменные замечания.</strong> Отправил сотруднику минимум 3 письменных замечания по email с копией HR. С конкретными датами и примерами.</div>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this, 1)">
+          <div class="check-box">✓</div>
+          <div class="check-text"><strong>Свидетельства коллег.</strong> Собрал 2-3 письменных свидетельства от коллег о конкретных инцидентах (с их согласия).</div>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this, 2)">
+          <div class="check-box">✓</div>
+          <div class="check-text"><strong>Метрики просадки команды.</strong> Задокументировал падение продуктивности команды: текучесть, результаты опросов, количество жалоб в HR.</div>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this, 3)">
+          <div class="check-box">✓</div>
+          <div class="check-text"><strong>История 1-on-1.</strong> Сохранил записи встреч, где обсуждалось поведение. Сотрудник подписывал итоги встреч (или есть follow-up email с его молчаливым согласием).</div>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this, 4)">
+          <div class="check-box">✓</div>
+          <div class="check-text"><strong>План исправления (PIP).</strong> Если в компании предусмотрена процедура — формально запустил Performance Improvement Plan за 30-60 дней до решения.</div>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this, 5)">
+          <div class="check-box">✓</div>
+          <div class="check-text"><strong>Консультация с юристом/HR.</strong> Согласовал процедуру увольнения с HR и/или юристом. Проверил трудовую историю сотрудника на риски.</div>
+        </div>
+        <div class="checklist-item" onclick="toggleCheck(this, 6)">
+          <div class="check-box">✓</div>
+          <div class="check-text"><strong>План передачи дел.</strong> Подготовил список проектов, клиентов, доступов, которые нужно передать. Назначил временного ответственного.</div>
+        </div>
+      </div>
+
+      <div class="check-progress">
+        Выполнено: <strong id="checkCount">0</strong> из 7
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(1)">← Назад</button>
+        <button class="btn btn-primary" onclick="completeAndGo(3)">Дальше: Подготовка →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 3: PREPARATION ═══════ -->
+    <div class="section" data-idx="3">
+      <div class="tag">Шаг 3</div>
+      <h1>Подготовка <span>к разговору</span></h1>
+      <p class="lead">80% успеха разговора — это подготовка. Разберём, что взять с собой, что НЕ говорить и как выбрать время.</p>
+
+      <div class="card card-accent">
+        <h3 style="margin-top:0">✅ Что взять с собой</h3>
+        <p style="margin-bottom:8px">• <strong>Распечатанные факты</strong> — даты, цитаты, email'ы. Не в телефоне, а на бумаге. Это создаёт вес разговора.</p>
+        <p style="margin-bottom:8px">• <strong>Присутствие HR</strong> — обязательно. Свидетель = защита от манипуляций «он сказал / она сказала».</p>
+        <p style="margin-bottom:8px">• <strong>Готовое решение по датам</strong> — последний рабочий день, условия, компенсация. Ты приходишь с решением, а не за обсуждением.</p>
+        <p>• <strong>Список контактов</strong> — юрист, HR-директор, служба поддержки на случай острой реакции.</p>
+      </div>
+
+      <div class="card card-danger">
+        <h3 style="margin-top:0; color: var(--red)">🚫 Что НЕ говорить никогда</h3>
+        <p style="margin-bottom:8px">❌ <em>«Мы решили тебя уволить, потому что ты токсичный»</em> — это эмоциональная оценка. В суде это против тебя.</p>
+        <p style="margin-bottom:8px">❌ <em>«Мне лично некомфортно с тобой работать»</em> — переводит разговор в личную плоскость.</p>
+        <p style="margin-bottom:8px">❌ <em>«Давай подумаем, может, есть другой вариант»</em> — если решение принято, не оставляй ложной надежды.</p>
+        <p style="margin-bottom:8px">❌ <em>«Это не я решил, это HR/вышестоящее руководство»</em> — снимает с тебя ответственность лидера.</p>
+        <p>❌ <em>Извинения</em> — «мне очень жаль» воспринимается как признание вины. Говори нейтрально.</p>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">🕐 Как выбрать время</h3>
+        <p style="margin-bottom:8px">✓ <strong>Вторник-четверг</strong>, первая половина дня. Человек успеет переварить, задать вопросы, начать действовать.</p>
+        <p style="margin-bottom:8px">✓ <strong>Приватная комната</strong> (не твой кабинет — нейтральная территория). Дверь не должна запираться изнутри.</p>
+        <p style="margin-bottom:8px">✓ <strong>15-20 минут</strong> максимум. Разговор об увольнении не должен затягиваться.</p>
+        <p>✗ <strong>Не в пятницу</strong> — у человека будет 2 дня накручивать себя без возможности действовать.</p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(2)">← Назад</button>
+        <button class="btn btn-primary" onclick="completeAndGo(4)">Дальше: Симулятор →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 4: SIMULATOR ═══════ -->
+    <div class="section" data-idx="4">
+      <div class="tag">Шаг 4</div>
+      <h1>Симулятор <span>разговора</span></h1>
+      <p class="lead">Прорепетируй 3 самые сложные реакции star-специалиста. Выбирай ответ — получи мгновенный разбор от Нейро-Тренера.</p>
+
+      <div id="simBox"></div>
+
+      <div class="btn-group" id="simNav">
+        <button class="btn btn-secondary" onclick="goTo(3)">← Назад</button>
+        <button class="btn btn-primary hidden" id="simNext" onclick="nextSimRound()">Следующая реакция →</button>
+        <button class="btn btn-primary hidden" id="simFinish" onclick="completeAndGo(5)">Завершить модуль →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 5: SCRIPT & AFTER ═══════ -->
+    <div class="section" data-idx="5">
+      <div class="tag">Шаг 5-6</div>
+      <h1>Скрипт разговора <span class="text-cyan">+</span> план после</h1>
+      <p class="lead">Готовый скрипт с ветвлением под разные реакции. И план, как объяснить команде, чтобы не потерять оставшихся.</p>
+
+      <h2>📜 Скрипт разговора</h2>
+      <p class="text-dim">Нажимай на реакции — увидишь, что отвечать.</p>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>🎬 Как начать разговор</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <p><strong>Ты:</strong> «[Имя], спасибо, что пришёл. Я пригласил(а) тебя, чтобы сообщить о решении, которое касается твоего дальнейшего работы в компании.»</p>
+            <p class="text-dim">Пауза 2 секунды. Не торопись.</p>
+            <div class="script-phrase">«После анализа последних 3 месяцев и нескольких обсуждений, мы приняли решение прекратить трудовые отношения. Твой последний рабочий день — [дата].»</div>
+            <p class="text-dim">Говоришь один раз. Не повторяешь. Не оправдываешься.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>😡 «Почему? Я тащу на себе весь отдел!»</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <p class="text-dim">Не оправдывайся. Возвращай к фактам.</p>
+            <div class="script-phrase">«Я понимаю, что твой вклад в результаты значителен. Решение основано не на результатах, а на том, как твоё поведение влияет на команду. Мы обсуждали это [дата], [дата], [дата]. Ситуация не изменилась.»</div>
+            <p class="text-dim">Если продолжает давить — повторяешь ключевую фразу без новых аргументов.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>⚖️ «Я пойду в суд / к юристу!»</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <p class="text-dim">Спокойно. Это нормальная реакция. У тебя есть документы (Шаг 2).</p>
+            <div class="script-phrase">«Это твоё право. Все документы, на которых основано решение, оформлены в соответствии с ТК. HR готов(а) ответить на любые процедурные вопросы. Если хочешь — мы можем предложить соглашение сторон с компенсацией [X].»</div>
+            <p class="text-dim"><strong>Важно:</strong> никогда не говори «давай без суда». Это звучит как угроза. Предлагай конструктив.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>😢 «Я не ожидал... у меня семья, ипотека...»</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <p class="text-dim">Эмпатия — да. Отмена решения — нет.</p>
+            <div class="script-phrase">«Я понимаю, что это тяжёлая новость. Решение окончательное. Давай сейчас обсудим, как мы можем поддержать тебя в переходный период: рекомендации, помощь в поиске, компенсация.»</div>
+            <p class="text-dim">Переключай фокус на будущее. Не застревай в эмоциях.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="script-item" onclick="toggleScript(this)">
+        <div class="script-header">
+          <span>🤝 Как закончить разговор</span>
+          <span class="script-arrow">▼</span>
+        </div>
+        <div class="script-body">
+          <div class="script-content">
+            <div class="script-phrase">«Спасибо за твой вклад в компанию. Мы ценим то, что ты сделал. HR сейчас детализирует все условия. Если появятся вопросы — я открыт к короткому разговору в течение этой недели.»</div>
+            <p class="text-dim">Рукопожатие (если уместно). Коротко. Без долгих прощаний.</p>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="mt-24">👥 План объяснения команде</h2>
+      <p class="lead">В течение 2 часов после разговора — общее собрание команды. Вот структура.</p>
+
+      <div class="card card-success">
+        <h3 style="margin-top:0; color: var(--green)">✅ Что говорить команде</h3>
+        <div class="script-phrase">«[Имя] больше не работает в компании. Решение принято по обоюдному согласию. Я понимаю, что это новость, и у вас могут быть вопросы. Сейчас я отвечу на то, что могу рассказать.»</div>
+        <p class="text-dim" style="margin-bottom:8px">Дальше — <strong>3 ключевых сообщения</strong>:</p>
+        <p style="margin-bottom:8px">1. <strong>Стабильность:</strong> «Все проекты продолжаются. Ваши задачи не меняются. Вот план передачи дел.»</p>
+        <p style="margin-bottom:8px">2. <strong>Справедливость:</strong> «Решения о людях принимаются на основе данных и процессов. Это касается каждого — и это правильно.»</p>
+        <p>3. <strong>Открытость:</strong> «Если у вас есть личные вопросы или переживания — мои двери открыты. Поговорим 1-на-1.»</p>
+      </div>
+
+      <div class="card card-danger">
+        <h3 style="margin-top:0; color: var(--red)">🚫 Что НЕ говорить команде</h3>
+        <p style="margin-bottom:8px">❌ Причины увольнения в деталях — это конфиденциально</p>
+        <p style="margin-bottom:8px">❌ «Он был токсичный» — даже если это правда</p>
+        <p style="margin-bottom:8px">❌ «Теперь нам будет легче» — создаёт атмосферу страха</p>
+        <p>❌ Отвечать на провокационные вопросы «а правда, что он...» — «Я не обсуждаю личные обстоятельства»</p>
+      </div>
+
+      <div class="final-card">
+        <h2>🎓 Модуль завершён</h2>
+        <p class="text-dim">Ты прошёл самый сложный модуль курса. Впереди — 5 тем, которые прокачают твои управленческие мышцы.</p>
+        <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-top:20px">
+          <div style="padding:14px 20px; background:var(--bg2); border-radius:12px; border:1px solid var(--green)">
+            <div style="font-size:24px; font-weight:800; color:var(--green)">✓</div>
+            <div style="font-size:12px; color:var(--text-dim); margin-top:4px">Модуль 1 пройден</div>
+          </div>
+          <div style="padding:14px 20px; background:var(--bg2); border-radius:12px; border:1px solid var(--border)">
+            <div style="font-size:24px; font-weight:800; color:var(--text-dim)">5</div>
+            <div style="font-size:12px; color:var(--text-dim); margin-top:4px">модулей впереди</div>
+          </div>
+        </div>
+        <div class="btn-group" style="justify-content:center">
+          <button class="btn btn-primary" onclick="location.href='module2.html'">Следующий модуль →</button>
+          <button class="btn btn-secondary" onclick="goTo(0)">В начало модуля</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════ STATE ═══════════════════════ */
+const TOTAL_SECTIONS = 6;
+let currentSection = 0;
+let completedSections = new Set();
+let checkedItems = new Set();
+let simRound = 0;
+let simScore = 0;
+
+// Restore from localStorage
+try {
+  const saved = JSON.parse(localStorage.getItem('module1_progress') || '{}');
+  if (saved.completed) completedSections = new Set(saved.completed);
+  if (saved.checked) checkedItems = new Set(saved.checked);
+} catch(e){}
+
+/* ═══════════════════════ NAVIGATION ═══════════════════════ */
+function goTo(idx) {
+  currentSection = idx;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.section[data-idx="${idx}"]`).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-section="${idx}"]`).classList.add('active');
+
+  const titles = ['Введение', 'Диагностика токсичности', 'Документирование', 'Подготовка к разговору', 'Симулятор разговора', 'Скрипт и после увольнения'];
+  document.getElementById('topSub').textContent = `Раздел ${idx+1} из ${TOTAL_SECTIONS} · ${titles[idx]}`;
+
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  if (idx === 4 && simRound === 0) loadSimRound();
+
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function completeAndGo(idx) {
+  completedSections.add(currentSection);
+  saveProgress();
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (completedSections.has(parseInt(n.dataset.section))) n.classList.add('completed');
+  });
+  goTo(idx);
+}
+
+function updateProgress() {
+  const pct = ((currentSection + 1) / TOTAL_SECTIONS) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('module1_progress', JSON.stringify({
+      completed: [...completedSections],
+      checked: [...checkedItems]
+    }));
+  } catch(e){}
+}
+
+function toggleMobile() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+/* ═══════════════════════ CALCULATOR ═══════════════════════ */
+function updateCalc() {
+  const v1 = +document.getElementById('v1').value;
+  const v2 = +document.getElementById('v2').value;
+  const v3 = +document.getElementById('v3').value;
+  const v4 = +document.getElementById('v4').value;
+  const v5 = +document.getElementById('v5').value;
+  const v6 = +document.getElementById('v6').value;
+
+  document.getElementById('v1-val').textContent = `${v1} / 10`;
+  document.getElementById('v2-val').textContent = `${v2} / 10`;
+  document.getElementById('v3-val').textContent = v3;
+  document.getElementById('v4-val').textContent = `${v4} ч/нед`;
+  document.getElementById('v5-val').textContent = `${v5} / 10`;
+  document.getElementById('v6-val').textContent = `${v6.toLocaleString('ru-RU')} ₽/ч`;
+
+  // Toxicity score (weighted)
+  const raw = (v1 * 1.5 + v2 * 0.8 + v3 * 8 + v4 * 2 + v5 * 1.2);
+  const max = (10 * 1.5 + 10 * 0.8 + 10 * 8 + 20 * 2 + 10 * 1.2);
+  const score = Math.round((raw / max) * 100);
+
+  // Cost: manager time + replacement cost of newcomers
+  const weeklyLossHours = v4;
+  const yearlyManagerLoss = weeklyLossHours * 48 * v6;
+  const newcomerCost = v3 * 450000; // avg 450k per replacement
+  const teamProductivityLoss = v5 * 15000; // 15k per point per year
+  const totalCost = yearlyManagerLoss + newcomerCost + teamProductivityLoss;
+
+  document.getElementById('toxScore').textContent = score + '%';
+  document.getElementById('toxCost').textContent = `~ ${Math.round(totalCost).toLocaleString('ru-RU')} ₽ / год`;
+
+  // Verdict
+  const verdictTitle = document.getElementById('verdictTitle');
+  const verdictText = document.getElementById('verdictText');
+  const verdictCard = document.getElementById('verdictCard');
+
+  if (score < 30) {
+    verdictTitle.innerHTML = '🟢 Вердикт Нейро-Тренера';
+    verdictText.innerHTML = 'Ситуация под контролем. Токсичность невысока. Попробуй коучинговый подход и чёткие границы. Увольнение пока не требуется.';
+    verdictCard.className = 'card card-success';
+  } else if (score < 60) {
+    verdictTitle.innerHTML = '🟡 Вердикт Нейро-Тренера';
+    verdictText.innerHTML = 'Ситуация на грани. Запусти формальный Performance Improvement Plan на 30 дней. Если прогресса нет — переходи к увольнению. Каждый месяц промедления стоит тебе <strong>' + Math.round(totalCost/12).toLocaleString('ru-RU') + ' ₽</strong>.';
+    verdictCard.className = 'card card-warn';
+  } else {
+    verdictTitle.innerHTML = '🔴 Вердикт Нейро-Тренера';
+    verdictText.innerHTML = 'Критическая ситуация. Ты теряешь <strong>' + Math.round(totalCost/12).toLocaleString('ru-RU') + ' ₽ в месяц</strong> и разрушаешь команду. Начинай подготовку к увольнению немедленно. Переходи к Шагу 2.';
+    verdictCard.className = 'card card-danger';
+  }
+}
+
+/* ═══════════════════════ CHECKLIST ═══════════════════════ */
+function toggleCheck(el, idx) {
+  if (checkedItems.has(idx)) {
+    checkedItems.delete(idx);
+    el.classList.remove('checked');
+  } else {
+    checkedItems.add(idx);
+    el.classList.add('checked');
+    playGood();
+  }
+  document.getElementById('checkCount').textContent = checkedItems.size;
+  saveProgress();
+}
+
+function restoreChecklist() {
+  const items = document.querySelectorAll('.checklist-item');
+  items.forEach((item, idx) => {
+    if (checkedItems.has(idx)) item.classList.add('checked');
+  });
+  document.getElementById('checkCount').textContent = checkedItems.size;
+}
+
+/* ═══════════════════════ SIMULATOR ═══════════════════════ */
+const simRounds = [
+  {
+    speaker: 'Сотрудник',
+    quote: '«Ты не имеешь права! Я тащу на себе 40% KPI отдела. Без меня вы провалите квартал. Ты пожалеешь об этом решении.»',
+    choices: [
+      { text: '«Я понимаю твои чувства, но решение окончательное. Давай обсудим, как мы можем поддержать тебя в переходный период.»', correct: true,
+        feedback: '✅ <strong>Точно.</strong> Ты признал эмоции, но не отступил от решения. Предложил конструктив. Это позиция сильного лидера.' },
+      { text: '«Послушай, не надо так. Давай я ещё раз подумаю, может, найдём компромисс...»', correct: false,
+        feedback: '❌ <strong>Критическая ошибка.</strong> Ты только что дал ему рычаг. Он понял: давление работает. Теперь он будет давить сильнее — и либо останется на своих условиях, либо уйдёт с скандалом.' },
+      { text: '«Это не я решил, это HR и вышестоящее руководство. Я просто исполнитель.»', correct: false,
+        feedback: '❌ <strong>Ошибка.</strong> Ты снял с себя ответственность лидера. В его глазах ты — слабак. А в суде его юристы будут использовать это против компании: «руководитель не был согласен с решением».' }
+    ]
+  },
+  {
+    speaker: 'Сотрудник',
+    quote: '«Хорошо. Тогда я заберу с собой трёх ключевых клиентов. Они мои личные контакты. И расскажу всем на рынке, как вы тут обращаетесь с людьми.»',
+    choices: [
+      { text: '«Это шантаж. Все клиентские базы — собственность компании, это прописано в твоём контракте. Угрозы зафиксирую и передам юристам.»', correct: true,
+        feedback: '✅ <strong>Холодно и по делу.</strong> Ты назвал вещи своими именами, напомнил о юридических обязательствах и показал, что шантаж не работает. HR должен быть свидетелем этой фразы.' },
+      { text: '«Пожалуйста, не надо так. Давай обсудим, как сделать переход мягким для клиентов. Мы можем предложить тебе хорошую рекомендацию.»', correct: false,
+        feedback: '❌ <strong>Слабая позиция.</strong> Ты торгуешься с шантажистом. Он понял, что тебе страшно, и будет давить дальше. Рекомендации дают за хорошие отношения, а не в обмен на отказ от шантажа.' },
+      { text: '«Делай что хочешь. Мне всё равно.»', correct: false,
+        feedback: '❌ <strong>Эмоциональная реакция.</strong> Ты потерял контроль. Он записывает этот разговор? Отлично — вот тебе и доказательство «неадекватного руководителя». Всегда сохраняй холодную голову.' }
+    ]
+  },
+  {
+    speaker: 'Сотрудник',
+    quote: '(тихо, после паузы) «Слушай... я правда не понимал, что так получается. Я думал, я просто требовательный. Может, я могу измениться? Дай мне последний шанс.»',
+    choices: [
+      { text: '«Я ценю твою рефлексию. Но решение окончательное. Мы обсуждали это [дата], [дата], [дата]. Ситуация не изменилась. Давай сосредоточимся на достойном переходе.»', correct: true,
+        feedback: '✅ <strong>Идеально.</strong> Ты проявил эмпатию, но не дрогнул. Ссылка на конкретные даты показывает: это не импульсивное решение. Ты предлагаешь конструктив — это по-человечески.' },
+      { text: '«Знаешь... ладно. Давай я дам тебе ещё один месяц. Но это ПОСЛЕДНИЙ шанс.»', correct: false,
+        feedback: '❌ <strong>Ты проиграл.</strong> Эмоциональная манипуляция сработала. Ты дал «последний шанс» — а через месяц он придёт снова с той же историей. И команда увидела: давление слезой работает. Ты потерял авторитет навсегда.' },
+      { text: '«Нет. Разговор окончен. До свидания.»', correct: false,
+        feedback: '❌ <strong>Жёстко без нужды.</strong> Человек открылся, а ты захлопнул дверь. Это не сила — это черствость. Можно держать решение твёрдо, но оставаться человеком. Смотри вариант А.' }
+    ]
+  }
+];
+
+function loadSimRound() {
+  const r = simRounds[simRound];
+  const box = document.getElementById('simBox');
+
+  let html = `
+    <div class="sim-scenario">
+      <div class="sim-speaker">
+        <div class="sim-speaker-avatar">👤</div>
+        <span>${r.speaker} · Раунд ${simRound + 1} из ${simRounds.length}</span>
+      </div>
+      <div class="sim-quote">${r.quote}</div>
+      <div class="sim-choices" id="simChoices">
+  `;
+
+  r.choices.forEach((c, i) => {
+    html += `<button class="sim-choice" onclick="pickSim(${i})">${c.text}</button>`;
+  });
+
+  html += `</div></div><div class="sim-feedback" id="simFeedback"></div>`;
+  box.innerHTML = html;
+
+  document.getElementById('simNext').classList.add('hidden');
+  document.getElementById('simFinish').classList.add('hidden');
+}
+
+function pickSim(idx) {
+  const r = simRounds[simRound];
+  const choice = r.choices[idx];
+  const btns = document.querySelectorAll('.sim-choice');
+
+  btns.forEach(b => b.disabled = true);
+  btns[idx].classList.add(choice.correct ? 'correct' : 'wrong');
+  if (!choice.correct) {
+    r.choices.forEach((c, i) => { if (c.correct) btns[i].classList.add('correct'); });
+    playBad();
+  } else {
+    playGood();
+    simScore++;
+  }
+
+  const fb = document.getElementById('simFeedback');
+  fb.className = `sim-feedback show ${choice.correct ? 'good' : 'bad'}`;
+  fb.innerHTML = choice.feedback;
+
+  if (simRound < simRounds.length - 1) {
+    document.getElementById('simNext').classList.remove('hidden');
+  } else {
+    document.getElementById('simFinish').classList.remove('hidden');
+  }
+}
+
+function nextSimRound() {
+  simRound++;
+  loadSimRound();
+  window.scrollTo({ top: document.getElementById('simBox').offsetTop - 100, behavior: 'smooth' });
+}
+
+/* ═══════════════════════ SCRIPT ACCORDION ═══════════════════════ */
+function toggleScript(el) {
+  el.classList.toggle('open');
+}
+
+/* ═══════════════════════ AUDIO ═══════════════════════ */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playGood() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.06;
+    o.frequency.setValueAtTime(523, audioCtx.currentTime);
+    o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+    o.start(); o.stop(audioCtx.currentTime + 0.18);
+  } catch(e){}
+}
+function playBad() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.05;
+    o.frequency.setValueAtTime(180, audioCtx.currentTime);
+    o.start(); o.stop(audioCtx.currentTime + 0.22);
+  } catch(e){}
+}
+
+/* ═══════════════════════ INIT ═══════════════════════ */
+updateCalc();
+restoreChecklist();
+updateProgress();
+
+// Restore completed nav items
+document.querySelectorAll('.nav-item').forEach(n => {
+  if (completedSections.has(parseInt(n.dataset.section))) n.classList.add('completed');
+});
+</script>
+</body>
+</html>

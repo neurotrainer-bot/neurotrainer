@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Модуль 6: Финальная интеграция и сертификат</title>
+<style>
+  :root {
+    --bg: #0b0b1a;
+    --bg2: #12122a;
+    --bg3: #1a1a35;
+    --cyan: #00f0ff;
+    --cyan-dim: rgba(0,240,255,.12);
+    --green: #00ff88;
+    --green-dim: rgba(0,255,136,.12);
+    --red: #ff3366;
+    --red-dim: rgba(255,51,102,.12);
+    --yellow: #ffaa00;
+    --yellow-dim: rgba(255,170,0,.12);
+    --emerald: #10d49a;
+    --emerald-dim: rgba(16,212,154,.12);
+    --purple: #b366ff;
+    --purple-dim: rgba(179,102,255,.12);
+    --orange: #ff8844;
+    --orange-dim: rgba(255,136,68,.12);
+    --gold: #ffcc33;
+    --gold-dim: rgba(255,204,51,.12);
+    --pink: #ff3cac;
+    --blue: #2b86c5;
+    --sunset: linear-gradient(135deg, #ff3cac 0%, #784ba0 50%, #2b86c5 100%);
+    --sunset-dim: rgba(255,60,172,.1);
+    --text: #e0e0e8;
+    --text-dim: #7a7a9a;
+    --border: rgba(255,255,255,.08);
+    --radius: 16px;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(11,11,26,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .topbar-logo {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--sunset);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 0 16px rgba(255,60,172,.35);
+  }
+  .topbar-logo svg { width: 20px; height: 20px; }
+  .topbar-info { flex: 1; min-width: 0; }
+  .topbar-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .topbar-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .topbar-progress {
+    width: 100%; height: 3px; background: rgba(255,255,255,.06);
+    border-radius: 99px; margin-top: 6px; overflow: hidden;
+  }
+  .topbar-progress-fill {
+    height: 100%; width: 0%;
+    background: var(--sunset);
+    border-radius: 99px;
+    transition: width .6s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 0 8px var(--pink);
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 0;
+  }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .sidebar.mobile-open { display: block; position: fixed; inset: 0; z-index: 200; background: var(--bg); padding: 20px; overflow-y: auto; }
+    .mobile-toggle { display: flex !important; }
+  }
+
+  .sidebar {
+    padding: 24px 16px;
+    border-right: 1px solid var(--border);
+    position: sticky; top: 70px;
+    height: calc(100dvh - 70px);
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: var(--text-dim); margin-bottom: 16px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; margin-bottom: 4px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-dim);
+    transition: all .2s;
+    position: relative;
+  }
+  .nav-item:hover { background: var(--bg2); color: var(--text); }
+  .nav-item.active {
+    background: var(--sunset-dim);
+    color: var(--pink);
+    font-weight: 600;
+  }
+  .nav-item.completed::after {
+    content: '✓';
+    position: absolute; right: 12px;
+    color: var(--green); font-weight: 700;
+  }
+  .nav-num {
+    width: 24px; height: 24px; border-radius: 8px;
+    background: rgba(255,255,255,.05);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .nav-item.active .nav-num { background: var(--sunset); color: #fff; }
+  .nav-item.completed .nav-num { background: var(--green); color: var(--bg); }
+
+  .mobile-toggle {
+    display: none;
+    position: fixed; bottom: 20px; right: 20px; z-index: 150;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--sunset); color: #fff;
+    border: none; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(255,60,172,.4);
+    font-size: 24px; font-weight: 700;
+  }
+
+  .main { padding: 32px 28px 80px; min-height: calc(100dvh - 70px); }
+  @media (max-width: 600px) { .main { padding: 24px 18px 80px; } }
+
+  .section { display: none; animation: fadeUp .5s ease both; }
+  .section.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Typography ── */
+  h1 { font-size: 32px; font-weight: 800; line-height: 1.2; margin-bottom: 12px; }
+  h1 span {
+    background: var(--sunset);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2 { font-size: 22px; font-weight: 700; margin: 32px 0 16px; }
+  h3 { font-size: 17px; font-weight: 700; margin: 20px 0 10px; }
+  p { margin-bottom: 14px; font-size: 15px; }
+  .lead { font-size: 17px; color: var(--text-dim); margin-bottom: 24px; }
+
+  .tag {
+    display: inline-block;
+    padding: 5px 12px; border-radius: 99px;
+    background: var(--sunset-dim); color: var(--pink);
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 14px;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-accent { border-left: 4px solid var(--pink); }
+  .card-warn { border-left: 4px solid var(--yellow); background: var(--yellow-dim); }
+  .card-success { border-left: 4px solid var(--green); background: var(--green-dim); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: all .2s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--sunset);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255,60,172,.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(255,60,172,.4); }
+  .btn-secondary {
+    background: var(--bg3); color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--pink); color: var(--pink); }
+  .btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+
+  /* ── Course Map ── */
+  .course-map {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 20px 0;
+  }
+  @media (max-width: 820px) { .course-map { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 450px) { .course-map { grid-template-columns: 1fr; } }
+
+  .map-node {
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .3s;
+    position: relative;
+  }
+  .map-node:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+  }
+  .map-node.completed {
+    border-color: var(--green);
+    background: var(--green-dim);
+  }
+  .map-node.completed::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 22px; height: 22px;
+    background: var(--green);
+    color: var(--bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .map-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .map-num {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .map-title {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .map-score {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .map-score strong {
+    color: var(--green);
+    font-size: 13px;
+  }
+
+  /* ── Final Test ── */
+  .test-question {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .test-q-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .test-q-num {
+    font-size: 12px; color: var(--pink);
+    font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .test-q-module {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 99px;
+    background: var(--bg3);
+    color: var(--text-dim);
+  }
+  .test-q-text {
+    font-size: 16px; font-weight: 600;
+    line-height: 1.5; margin-bottom: 16px;
+  }
+  .test-options { display: flex; flex-direction: column; gap: 8px; }
+  .test-option {
+    padding: 14px 16px;
+    background: var(--bg3);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px; line-height: 1.5;
+    text-align: left;
+    transition: all .2s;
+    color: var(--text);
+  }
+  .test-option:hover:not(:disabled) {
+    border-color: var(--pink);
+    background: var(--sunset-dim);
+  }
+  .test-option.selected {
+    border-color: var(--pink);
+    background: var(--sunset-dim);
+    color: var(--pink);
+    font-weight: 600;
+  }
+  .test-option:disabled { cursor: default; }
+  .test-option.correct {
+    border-color: var(--green);
+    background: var(--green-dim);
+    color: var(--text);
+  }
+  .test-option.wrong {
+    border-color: var(--red);
+    background: var(--red-dim);
+    color: var(--text);
+  }
+
+  .test-progress {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .test-progress-label {
+    font-size: 13px; color: var(--text-dim);
+  }
+  .test-progress-label strong {
+    color: var(--pink);
+    font-size: 18px;
+  }
+  .test-progress-bar {
+    flex: 1; min-width: 200px;
+    height: 6px;
+    background: rgba(255,255,255,.06);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .test-progress-fill {
+    height: 100%;
+    background: var(--sunset);
+    border-radius: 99px;
+    width: 0%;
+    transition: width .5s ease;
+  }
+
+  /* ── Profile Result ── */
+  .profile-card {
+    background: linear-gradient(135deg, rgba(255,60,172,.08), rgba(43,134,197,.08));
+    border: 1px solid rgba(255,60,172,.2);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    margin: 24px 0;
+    display: none;
+    animation: fadeUp .6s ease;
+  }
+  .profile-card.show { display: block; }
+  .profile-icon {
+    font-size: 64px;
+    margin-bottom: 12px;
+  }
+  .profile-title {
+    font-size: 26px; font-weight: 800;
+    background: var(--sunset);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  .profile-subtitle {
+    font-size: 14px; color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .profile-desc {
+    font-size: 15px; line-height: 1.7;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+
+  .profile-bars {
+    text-align: left;
+    margin: 20px 0;
+  }
+  .profile-bar-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .profile-bar-label {
+    width: 140px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .profile-bar-track {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,.06);
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+  .profile-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    width: 0%;
+    transition: width 1.2s cubic-bezier(.22,1,.36,1);
+  }
+  .profile-bar-value {
+    width: 40px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .profile-strengths, .profile-growth {
+    text-align: left;
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 12px;
+  }
+  .profile-strengths {
+    background: var(--green-dim);
+    border-left: 4px solid var(--green);
+  }
+  .profile-growth {
+    background: var(--yellow-dim);
+    border-left: 4px solid var(--yellow);
+  }
+  .profile-strengths h4, .profile-growth h4 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+  .profile-strengths h4 { color: var(--green); }
+  .profile-growth h4 { color: var(--yellow); }
+  .profile-strengths ul, .profile-growth ul {
+    list-style: none;
+  }
+  .profile-strengths li, .profile-growth li {
+    padding: 6px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    display: flex; gap: 8px;
+  }
+
+  /* ── Development Map ── */
+  .dev-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 16px;
+  }
+  @media (max-width: 600px) { .dev-grid { grid-template-columns: 1fr; } }
+
+  .dev-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: all .3s;
+  }
+  .dev-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--pink);
+  }
+  .dev-card-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .dev-card-icon {
+    font-size: 28px;
+  }
+  .dev-card-title {
+    font-size: 15px; font-weight: 700;
+  }
+  .dev-card-desc {
+    font-size: 13px; color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+  .dev-card-action {
+    font-size: 12px;
+    padding: 8px 12px;
+    background: var(--sunset-dim);
+    color: var(--pink);
+    border-radius: 8px;
+    display: inline-block;
+    font-weight: 600;
+  }
+
+  /* ── Certificate ── */
+  .cert-container {
+    background: linear-gradient(135deg, rgba(255,60,172,.06), rgba(43,134,197,.06));
+    border: 1px solid rgba(255,60,172,.2);
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    margin-top: 24px;
+  }
+  .cert-input-wrap {
+    max-width: 400px;
+    margin: 20px auto;
+  }
+  .cert-input {
+    width: 100%;
+    padding: 14px 18px;
+    background: var(--bg3);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 16px;
+    text-align: center;
+    transition: border-color .2s;
+  }
+  .cert-input:focus {
+    outline: none;
+    border-color: var(--pink);
+  }
+  .cert-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .cert-preview {
+    margin: 24px auto;
+    max-width: 700px;
+    background: var(--bg2);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+  .cert-preview svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .cert-actions {
+    display: flex; gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  /* ── Final CTA ── */
+  .final-cta {
+    background: var(--sunset);
+    border-radius: 20px;
+    padding: 40px 28px;
+    text-align: center;
+    margin-top: 32px;
+    color: #fff;
+  }
+  .final-cta h2 {
+    color: #fff;
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  .final-cta p {
+    font-size: 16px;
+    opacity: .95;
+    margin-bottom: 24px;
+  }
+  .final-cta-buttons {
+    display: flex; gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn-white {
+    background: #fff;
+    color: var(--bg);
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.3); }
+  .btn-ghost {
+    background: transparent;
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-weight: 600;
+    border: 2px solid rgba(255,255,255,.4);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,.1); border-color: #fff; }
+
+  .hidden { display: none !important; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .mb-16 { margin-bottom: 16px; }
+  .text-pink { color: var(--pink); }
+  .text-dim { color: var(--text-dim); }
+  .text-center { text-align: center; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- Кнопка возврата на dashboard -->
+<div style="position:fixed; top:14px; left:20px; z-index:200;">
+  <a href="index.html" style="
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 14px;
+    background:rgba(18,18,42,.9);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:99px;
+    color:#e0e0e8;
+    font-size:13px; font-weight:600;
+    text-decoration:none;
+    transition:all .2s;
+  " onmouseover="this.style.borderColor='var(--cyan)'; this.style.color='var(--cyan)'" 
+     onmouseout="this.style.borderColor='rgba(255,255,255,.08)'; this.style.color='#e0e0e8'">
+    ← К курсу
+  </a>
+</div>
+
+<!-- ═══════════════ TOP BAR ═══════════════ -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2 L15 9 L22 10 L17 15 L18 22 L12 19 L6 22 L7 15 L2 10 L9 9 Z" fill="#fff"/>
+    </svg>
+  </div>
+  <div class="topbar-info">
+    <div class="topbar-title">Модуль 6: Финальная интеграция и сертификат</div>
+    <div class="topbar-sub" id="topSub">Раздел 1 из 6 · Введение</div>
+    <div class="topbar-progress"><div class="topbar-progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════ LAYOUT ═══════════════ -->
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">Финальный модуль</div>
+    <div class="nav-item active" data-section="0" onclick="goTo(0)">
+      <div class="nav-num">1</div><span>Карта курса</span>
+    </div>
+    <div class="nav-item" data-section="1" onclick="goTo(1)">
+      <div class="nav-num">2</div><span>Финальный тест</span>
+    </div>
+    <div class="nav-item" data-section="2" onclick="goTo(2)">
+      <div class="nav-num">3</div><span>Твой профиль</span>
+    </div>
+    <div class="nav-item" data-section="3" onclick="goTo(3)">
+      <div class="nav-num">4</div><span>Карта развития</span>
+    </div>
+    <div class="nav-item" data-section="4" onclick="goTo(4)">
+      <div class="nav-num">5</div><span>Сертификат</span>
+    </div>
+  </aside>
+
+  <button class="mobile-toggle" onclick="toggleMobile()">☰</button>
+
+  <main class="main">
+
+    <!-- ═══════ SECTION 0: COURSE MAP ═══════ -->
+    <div class="section active" data-idx="0">
+      <div class="tag">Финал</div>
+      <h1>Ты прошёл <span>путь лидера</span></h1>
+      <p class="lead">5 модулей. 30+ инструментов. Десятки симуляций. Теперь — время собрать всё воедино, увидеть свою картину целиком и получить заслуженный сертификат.</p>
+
+      <div class="card card-accent">
+        <h3 style="margin-top:0">🗺️ Карта твоего пути</h3>
+        <p class="text-dim" style="margin-bottom:16px">Каждый модуль — это навык. Вместе они образуют систему современного руководителя. Посмотри, что ты уже прошёл, и что тебя ждёт в финальном тесте.</p>
+
+        <div class="course-map" id="courseMap"></div>
+      </div>
+
+      <div class="card card-success">
+        <h3 style="margin-top:0; color: var(--green)">🎯 Что будет в финале</h3>
+        <p style="margin-bottom:8px">• <strong>Тест из 15 вопросов</strong> — по 3 вопроса из каждого модуля. Проверит, насколько глубоко ты усвоил материал.</p>
+        <p style="margin-bottom:8px">• <strong>Персональный профиль</strong> — на основе ответов определим твой архетип руководителя.</p>
+        <p style="margin-bottom:8px">• <strong>Карта развития</strong> — конкретные рекомендации, что прокачать дальше.</p>
+        <p style="margin-bottom:8px">• <strong>Именной сертификат</strong> — введи своё имя и получи персональный документ.</p>
+        <p>• <strong>План следующих шагов</strong> — куда двигаться после курса.</p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="goTo(1)">Начать финальный тест →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 1: FINAL TEST ═══════ -->
+    <div class="section" data-idx="1">
+      <div class="tag">Финальный тест</div>
+      <h1>15 вопросов <span>на проверку</span></h1>
+      <p class="lead">3 вопроса из каждого модуля. Отвечай честно — от этого зависит точность твоего профиля. Время не ограничено.</p>
+
+      <div class="test-progress">
+        <div class="test-progress-label">Отвечено: <strong id="testAnswered">0</strong> / 15</div>
+        <div class="test-progress-bar"><div class="test-progress-fill" id="testProgressFill"></div></div>
+      </div>
+
+      <div id="testBox"></div>
+
+      <div class="btn-group" id="testNav">
+        <button class="btn btn-secondary" onclick="goTo(0)">← Назад</button>
+        <button class="btn btn-primary hidden" id="testFinish" onclick="showProfile()">Показать мой профиль →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 2: PROFILE ═══════ -->
+    <div class="section" data-idx="2">
+      <div class="tag">Твой профиль</div>
+      <h1>Твой архетип <span>руководителя</span></h1>
+      <p class="lead">На основе твоих ответов мы определили, какой ты лидер. Это не диагноз — это карта твоих сильных сторон и зон роста.</p>
+
+      <div class="profile-card" id="profileCard">
+        <div class="profile-icon" id="profileIcon"></div>
+        <div class="profile-title" id="profileTitle"></div>
+        <div class="profile-subtitle" id="profileSubtitle"></div>
+        <div class="profile-desc" id="profileDesc"></div>
+
+        <div class="profile-bars" id="profileBars"></div>
+
+        <div class="profile-strengths" id="profileStrengths"></div>
+        <div class="profile-growth" id="profileGrowth"></div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(1)">← Пересдать тест</button>
+        <button class="btn btn-primary" onclick="completeAndGo(3)">Дальше: Карта развития →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 3: DEVELOPMENT MAP ═══════ -->
+    <div class="section" data-idx="3">
+      <div class="tag">Карта развития</div>
+      <h1>Что прокачать <span>дальше</span></h1>
+      <p class="lead">Персональные рекомендации на основе твоего профиля. Это не «ещё один курс» — это конкретные действия на ближайшие 90 дней.</p>
+
+      <div class="card card-accent">
+        <h3 style="margin-top:0">🎯 Твой план на 90 дней</h3>
+        <p class="text-dim">3 приоритетные зоны роста. В каждой — конкретное действие, которое можно начать уже сегодня.</p>
+      </div>
+
+      <div class="dev-grid" id="devGrid"></div>
+
+      <div class="card card-success mt-24">
+        <h3 style="margin-top:0; color: var(--green)">💡 Универсальные привычки сильного лидера</h3>
+        <p style="margin-bottom:8px">Независимо от твоего профиля — эти 5 привычек усилят любого руководителя:</p>
+        <p style="margin-bottom:8px"><strong>1. Еженедельная рефлексия.</strong> 15 минут в пятницу: что получилось, что нет, какие выводы.</p>
+        <p style="margin-bottom:8px"><strong>2. 1 книга в месяц.</strong> По управлению, психологии, бизнесу. Не «когда-нибудь», а в календаре.</p>
+        <p style="margin-bottom:8px"><strong>3. Раз в квартал — честный разговор с командой.</strong> «Что мне перестать делать? Что начать делать?»</p>
+        <p style="margin-bottom:8px"><strong>4. Ментор или коуч.</strong> Даже сильнейшим нужен тот, кто видит слепые зоны.</p>
+        <p><strong>5. Преподавай.</strong> Объясни коллеге то, что узнал в этом курсе. Лучший способ закрепить — научить другого.</p>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(2)">← Назад</button>
+        <button class="btn btn-primary" onclick="completeAndGo(4)">Получить сертификат →</button>
+      </div>
+    </div>
+
+    <!-- ═══════ SECTION 4: CERTIFICATE ═══════ -->
+    <div class="section" data-idx="4">
+      <div class="tag">Сертификат</div>
+      <h1>Твой <span>сертификат</span></h1>
+      <p class="lead">Ты прошёл весь путь. Введи своё имя — и получи персональный сертификат, подтверждающий твои новые навыки.</p>
+
+      <div class="cert-container">
+        <h3 style="margin-top:0">Введи своё имя</h3>
+        <div class="cert-input-wrap">
+          <input type="text" class="cert-input" id="certName" placeholder="Имя и Фамилия" maxlength="40" oninput="updateCert()">
+        </div>
+
+        <div class="cert-preview" id="certPreview">
+          <svg id="certSvg" viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="certGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff3cac"/>
+                <stop offset="50%" stop-color="#784ba0"/>
+                <stop offset="100%" stop-color="#2b86c5"/>
+              </linearGradient>
+              <linearGradient id="certBg" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#12122a"/>
+                <stop offset="100%" stop-color="#0b0b1a"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Background -->
+            <rect width="800" height="560" fill="url(#certBg)"/>
+
+            <!-- Border -->
+            <rect x="20" y="20" width="760" height="520" fill="none" stroke="url(#certGrad)" stroke-width="2" rx="8"/>
+            <rect x="30" y="30" width="740" height="500" fill="none" stroke="url(#certGrad)" stroke-width="1" rx="4" opacity=".4"/>
+
+            <!-- Corner ornaments -->
+            <circle cx="40" cy="40" r="4" fill="url(#certGrad)"/>
+            <circle cx="760" cy="40" r="4" fill="url(#certGrad)"/>
+            <circle cx="40" cy="520" r="4" fill="url(#certGrad)"/>
+            <circle cx="760" cy="520" r="4" fill="url(#certGrad)"/>
+
+            <!-- Star icon -->
+            <g transform="translate(400, 90)">
+              <path d="M0 -30 L8 -10 L28 -8 L13 6 L17 26 L0 16 L-17 26 L-13 6 L-28 -8 L-8 -10 Z" fill="url(#certGrad)"/>
+            </g>
+
+            <!-- Title -->
+            <text x="400" y="160" text-anchor="middle" fill="#e0e0e8" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" letter-spacing="4">СЕРТИФИКАТ</text>
+            <text x="400" y="185" text-anchor="middle" fill="#7a7a9a" font-family="Segoe UI, sans-serif" font-size="11" letter-spacing="2">О ЗАВЕРШЕНИИ КУРСА</text>
+
+            <!-- Name -->
+            <text x="400" y="250" text-anchor="middle" fill="url(#certGrad)" font-family="Segoe UI, sans-serif" font-size="36" font-weight="800" id="certNameText">Имя Фамилия</text>
+
+            <!-- Divider -->
+            <line x1="280" y1="275" x2="520" y2="275" stroke="url(#certGrad)" stroke-width="1" opacity=".5"/>
+
+            <!-- Description -->
+            <text x="400" y="310" text-anchor="middle" fill="#e0e0e8" font-family="Segoe UI, sans-serif" font-size="13">успешно завершил(а) интерактивный курс</text>
+            <text x="400" y="340" text-anchor="middle" fill="#fff" font-family="Segoe UI, sans-serif" font-size="18" font-weight="700">«Анатомия сложных диалогов»</text>
+            <text x="400" y="365" text-anchor="middle" fill="#7a7a9a" font-family="Segoe UI, sans-serif" font-size="12">6 модулей · 30+ инструментов · 20+ симуляций</text>
+
+            <!-- Date & Signature -->
+            <text x="200" y="460" text-anchor="middle" fill="#7a7a9a" font-family="Segoe UI, sans-serif" font-size="11">ДАТА</text>
+            <text x="200" y="485" text-anchor="middle" fill="#e0e0e8" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" id="certDateText">09 сентября 2026</text>
+
+            <text x="600" y="460" text-anchor="middle" fill="#7a7a9a" font-family="Segoe UI, sans-serif" font-size="11">ПОДПИСЬ</text>
+            <text x="600" y="485" text-anchor="middle" fill="url(#certGrad)" font-family="Segoe UI, sans-serif" font-size="16" font-weight="700" font-style="italic">Нейро-Тренер</text>
+
+            <!-- Lines under -->
+            <line x1="120" y1="495" x2="280" y2="495" stroke="#7a7a9a" stroke-width="1" opacity=".3"/>
+            <line x1="520" y1="495" x2="680" y2="495" stroke="#7a7a9a" stroke-width="1" opacity=".3"/>
+
+            <!-- ID -->
+            <text x="400" y="525" text-anchor="middle" fill="#7a7a9a" font-family="Segoe UI, sans-serif" font-size="9" letter-spacing="2" id="certIdText">ID: NT-2026-000000</text>
+          </svg>
+        </div>
+
+        <div class="cert-actions">
+          <button class="btn btn-primary" onclick="downloadCert()">⬇ Скачать сертификат (SVG)</button>
+          <button class="btn btn-secondary" onclick="copyCertLink()">🔗 Скопировать ссылку</button>
+        </div>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="goTo(3)">← Назад</button>
+        <button class="btn btn-primary" onclick="alert('Поздравляю! Курс завершён 🎉')">🎉 Курс завершён</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════ STATE ═══════════════════════ */
+const TOTAL_SECTIONS = 5;
+let currentSection = 0;
+let completedSections = new Set();
+let testAnswers = {};
+
+// Course data
+const courseModules = [
+  { num: 1, icon: '🔥', title: 'Увольнение токсичного star', color: 'var(--red)', storageKey: 'module1_progress' },
+  { num: 2, icon: '👴', title: 'Обратная связь старшему', color: 'var(--purple)', storageKey: 'module2_progress' },
+  { num: 3, icon: '🎯', title: '1-on-1 с результатами', color: 'var(--orange)', storageKey: 'module3_progress' },
+  { num: 4, icon: '💰', title: 'Разговор о деньгах', color: 'var(--gold)', storageKey: 'module4_progress' },
+  { num: 5, icon: '🌱', title: 'Развитие и делегирование', color: 'var(--emerald)', storageKey: 'module5_progress' }
+];
+
+// Final test questions (3 per module)
+const testQuestions = [
+  // Module 1: Увольнение
+  { m: 1, q: 'Что делать в первую очередь, если ты подозреваешь, что сотрудник токсичен?',
+    opts: [
+      { t: 'Сразу уволить — команда страдает', c: false },
+      { t: 'Посчитать индекс токсичности и собрать факты', c: true },
+      { t: 'Поговорить с HR, пусть они решают', c: false },
+      { t: 'Дать ему ещё один шанс без условий', c: false }
+    ]},
+  { m: 1, q: 'Сотрудник при увольнении угрожает: «Заберу клиентов!». Твои действия?',
+    opts: [
+      { t: 'Предложить рекомендацию в обмен на отказ от угроз', c: false },
+      { t: 'Спокойно напомнить о контракте и зафиксировать угрозу при HR', c: true },
+      { t: 'Испугаться и пойти на уступки', c: false },
+      { t: 'Ответить агрессивно: «Делай что хочешь»', c: false }
+    ]},
+  { m: 1, q: 'Как объяснить команде увольнение star-специалиста?',
+    opts: [
+      { t: 'Рассказать все детали — люди имеют право знать', c: false },
+      { t: 'Сказать «он был токсичный» — это правда', c: false },
+      { t: 'Коротко: «ушёл по обоюдному согласию», зафиксировать стабильность и открытость', c: true },
+      { t: 'Ничего не говорить — само рассосётся', c: false }
+    ]},
+
+  // Module 2: Обратная связь старшему
+  { m: 2, q: 'Что означает «+» в модели SBI+?',
+    opts: [
+      { t: 'Позитивная оценка в конце', c: false },
+      { t: 'Уважение к опыту и приглашение к диалогу', c: true },
+      { t: 'Дополнительные факты', c: false },
+      { t: 'План развития', c: false }
+    ]},
+  { m: 2, q: '«Ветеран» говорит: «Я тут ещё когда тебя не было работал!». Твой ответ?',
+    opts: [
+      { t: '«Я твой руководитель, подчиняйся»', c: false },
+      { t: '«Извини, может, я не прав...»', c: false },
+      { t: '«Именно поэтому твой опыт ценен. Давай по фактам»', c: true },
+      { t: 'Промолчать и сменить тему', c: false }
+    ]},
+  { m: 2, q: 'Какая фраза убивает твой авторитет в разговоре со старшим?',
+    opts: [
+      { t: '«У меня есть наблюдение, хочу обсудить»', c: false },
+      { t: '«Может, я конечно не прав...»', c: true },
+      { t: '«Расскажи, как это выглядит с твоей стороны?»', c: false },
+      { t: '«Я ценю твой вклад»', c: false }
+    ]},
+
+  // Module 3: 1-on-1
+  { m: 3, q: 'Сколько времени на 1-on-1 должен говорить сотрудник?',
+    opts: [
+      { t: '30% — в основном руководитель', c: false },
+      { t: '50/50 — поровну', c: false },
+      { t: '70% — в основном сотрудник', c: true },
+      { t: '90% — только сотрудник', c: false }
+    ]},
+  { m: 3, q: 'Сотрудник говорит «всё нормально». Твои действия?',
+    opts: [
+      { t: 'Принять и перейти к своим темам', c: false },
+      { t: 'Настаивать: «Не верю, давай честно»', c: false },
+      { t: 'Расширить рамку: «А если всё может быть лучше — что бы ты изменил?»', c: true },
+      { t: 'Отменить встречу', c: false }
+    ]},
+  { m: 3, q: 'Что такое GROW в коучинге?',
+    opts: [
+      { t: 'Групповая работа с сотрудниками', c: false },
+      { t: 'Goal-Reality-Options-Will — структура коучинговой беседы', c: true },
+      { t: 'Метод мотивации через рост', c: false },
+      { t: 'Тип корпоративной культуры', c: false }
+    ]},
+
+  // Module 4: Деньги
+  { m: 4, q: 'Сотрудник приходит с шантажом: «Или +40%, или ухожу». Твои действия?',
+    opts: [
+      { t: 'Срочно согласовать повышение, лишь бы ушёл', c: false },
+      { t: 'Дать 2-3 дня на анализ, работать в обычном режиме', c: true },
+      { t: 'Сразу уволить — шантажисты не нужны', c: false },
+      { t: 'Пожаловаться в HR', c: false }
+    ]},
+  { m: 4, q: 'Что делать, если зарплата сотрудника на 25% ниже рынка?',
+    opts: [
+      { t: 'Ждать, пока он сам попросит', c: false },
+      { t: 'Срочно пересматривать — он уже получает офферы', c: true },
+      { t: 'Объяснить, что «деньги не главное»', c: false },
+      { t: 'Дать нематериальную мотивацию вместо повышения', c: false }
+    ]},
+  { m: 4, q: 'Что такое прозрачная система оплаты?',
+    opts: [
+      { t: 'Когда все знают, сколько получают коллеги', c: false },
+      { t: 'Оклад + бонусы с понятной формулой + лонг-терм', c: true },
+      { t: 'Фиксированная зарплата без бонусов', c: false },
+      { t: 'Зарплата по решению руководителя', c: false }
+    ]},
+
+  // Module 5: Делегирование
+  { m: 5, q: 'Новичок + рутинная задача. Какой стиль делегирования?',
+    opts: [
+      { t: 'Делегирование — пусть сам разберётся', c: false },
+      { t: 'Коучинг — задавать вопросы', c: false },
+      { t: 'Инструктирование — пошаговый алгоритм', c: true },
+      { t: 'Поддержка — выслушать и помочь', c: false }
+    ]},
+  { m: 5, q: 'Сотрудник боится брать сложную задачу. Твой ответ?',
+    opts: [
+      { t: '«Не бойся, справишься!»', c: false },
+      { t: 'Отдать задачу другому', c: false },
+      { t: 'Признать страх, объяснить почему именно он, разбить на этапы', c: true },
+      { t: 'Приказать — это его работа', c: false }
+    ]},
+  { m: 5, q: 'Что такое IDP?',
+    opts: [
+      { t: 'Индивидуальный план развития сотрудника на 6-12 месяцев', c: true },
+      { t: 'Ежегодная оценка эффективности', c: false },
+      { t: 'Система премирования', c: false },
+      { t: 'Корпоративный университет', c: false }
+    ]}
+];
+
+// Profile archetypes
+const profiles = {
+  architect: {
+    icon: '🏛️',
+    title: 'Архитектор команды',
+    subtitle: 'Стратег · Системный мыслитель',
+    desc: 'Ты видишь картину целиком и строишь системы. Твоя сила — в структурном мышлении и умении принимать жёсткие решения. Ты не боишься увольнять, пересматривать зарплаты, перестраивать процессы. Зона роста — эмпатия и работа с эмоциями. Иногда ты забываешь, что за цифрами стоят люди.',
+    strengths: [
+      'Умеешь принимать непопулярные решения',
+      'Видишь системные проблемы, а не симптомы',
+      'Создаёшь прозрачные процессы',
+      'Не боишься разговоров о деньгах'
+    ],
+    growth: [
+      'Прокачай эмпатию — модуль 2 (обратная связь старшему)',
+      'Учись слушать на 1-on-1 — модуль 3',
+      'Развивай навык коучинга — модуль 5'
+    ]
+  },
+  diplomat: {
+    icon: '🕊️',
+    title: 'Дипломат',
+    subtitle: 'Эмпат · Мастер отношений',
+    desc: 'Ты строишь отношения и создаёшь атмосферу доверия. Люди идут к тебе за поддержкой, ты умеешь слушать и слышать. Твоя сила — в эмпатии и умении находить подход к любому. Зона роста — жёсткие решения. Ты часто откладываешь сложные разговоры и даёшь слишком много шансов.',
+    strengths: [
+      'Высокий уровень эмпатии и доверия в команде',
+      'Умеешь давать обратную связь тактически',
+      'Создаёшь психологическую безопасность',
+      'Развиваешь людей через поддержку'
+    ],
+    growth: [
+      'Прокачай жёсткие разговоры — модуль 1 (увольнение)',
+      'Учись не откладывать — модуль 4 (деньги)',
+      'Развивай системность — модуль 5 (делегирование)'
+    ]
+  },
+  operator: {
+    icon: '⚙️',
+    title: 'Операционист',
+    subtitle: 'Процессник · Исполнитель',
+    desc: 'Ты мастер процессов и исполнения. У тебя всё чётко, по плану, в срок. Твоя сила — в организации и контроле. Зона роста — стратегия и развитие людей. Ты часто делаешь задачи сам, вместо того чтобы делегировать, и забываешь о «мягких» навыках.',
+    strengths: [
+      'Чёткая организация и контроль',
+      'Умение доводить задачи до конца',
+      'Системный подход к работе',
+      'Надёжность и предсказуемость'
+    ],
+    growth: [
+      'Прокачай делегирование — модуль 5',
+      'Учись развивать людей — модуль 3 (1-on-1)',
+      'Развивай стратегическое мышление — модуль 4 (деньги как система)'
+    ]
+  },
+  mentor: {
+    icon: '🎓',
+    title: 'Наставник',
+    subtitle: 'Учитель · Развивающий лидер',
+    desc: 'Ты получаешь удовольствие от развития людей. Твоя команда растёт, потому что ты вкладываешься в каждого. Твоя сила — в коучинге и умении видеть потенциал. Зона роста — жёсткие решения и операционка. Ты можешь упустить токсичного сотрудника или откладывать финансовые разговоры.',
+    strengths: [
+      'Умеешь развивать людей через коучинг',
+      'Создаёшь культуру обучения',
+      'Видишь потенциал там, где другие не видят',
+      'Строишь сильную команду на долгий срок'
+    ],
+    growth: [
+      'Прокачай жёсткие решения — модуль 1 (увольнение)',
+      'Учись говорить о деньгах — модуль 4',
+      'Развивай операционную дисциплину — модуль 5 (SMART)'
+    ]
+  },
+  balanced: {
+    icon: '⚖️',
+    title: 'Сбалансированный лидер',
+    subtitle: 'Универсал · Зрелый руководитель',
+    desc: 'У тебя редкое сочетание всех навыков. Ты умеешь и жёсткие решения принимать, и людей развивать, и о деньгах говорить, и процессы выстраивать. Твоя сила — в балансе. Зона роста — углубление. Выбери 1-2 направления и стань в них экспертом.',
+    strengths: [
+      'Сбалансированный набор управленческих навыков',
+      'Адаптивность к разным ситуациям',
+      'Зрелое принятие решений',
+      'Умение работать с разными типами сотрудников'
+    ],
+    growth: [
+      'Выбери 1-2 модуля для углубления',
+      'Найди ментора уровня выше',
+      'Начни преподавать — это закрепит знания'
+    ]
+  },
+  intuitive: {
+    icon: '✨',
+    title: 'Интуитивный лидер',
+    subtitle: 'Харизмат · Лидер по природе',
+    desc: 'Ты ведёшь людей за собой благодаря харизме и чутью. Люди идут за тобой, потому что верят в тебя. Твоя сила — в вдохновении и энергии. Зона роста — системы и инструменты. Ты часто полагаешься на интуицию там, где нужны фреймворки и данные.',
+    strengths: [
+      'Харизма и умение вдохновлять',
+      'Сильное интуитивное чутьё',
+      'Энергия и мотивация команды',
+      'Умение быстро принимать решения'
+    ],
+    growth: [
+      'Изучи фреймворки — все 5 модулей',
+      'Внедри системы — модуль 4 (оплата), модуль 5 (IDP)',
+      'Развивай дисциплину — модуль 3 (регулярные 1-on-1)'
+    ]
+  }
+};
+
+// Development recommendations
+const devRecommendations = {
+  architect: [
+    { icon: '🎯', title: 'Прокачай эмпатию', desc: 'Пройди модуль 2 ещё раз. Сфокусируйся на «+» в SBI+ — уважении к опыту. Практикуй 1 раз в неделю.', action: 'Модуль 2, раздел «Симулятор Ветеран»' },
+    { icon: '👂', title: 'Учись слушать', desc: 'На следующих 3 встречах 1-on-1 поставь цель: говорить не больше 30% времени. Записывай соотношение.', action: 'Модуль 3, «Аудит твоих 1-on-1»' },
+    { icon: '🌱', title: 'Развивай коучинг', desc: 'Вместо готовых решений задавай вопросы по GROW. Начни с 1 сотрудника, практикуй месяц.', action: 'Модуль 3, «GROW-тренажёр» + Модуль 5' }
+  ],
+  diplomat: [
+    { icon: '⚔️', title: 'Тренируй жёсткие разговоры', desc: 'Пройди симулятор увольнения из модуля 1 минимум 3 раза. Выбери реальный случай и проработай по скрипту.', action: 'Модуль 1, «Симулятор разговора»' },
+    { icon: '💰', title: 'Не откладывай деньги', desc: 'В ближайший месяц проведи калькулятор рынка для каждого прямого подчинённого. Исправь перекосы.', action: 'Модуль 4, «Калькулятор: рынок vs ты»' },
+    { icon: '📊', title: 'Внедри системы', desc: 'Собери прозрачную систему оплаты по конструктору. Представь команде в течение месяца.', action: 'Модуль 4, «Прозрачная система оплаты»' }
+  ],
+  operator: [
+    { icon: '🤝', title: 'Делегируй больше', desc: 'Составь список из 5 задач, которые ты делаешь сам, но может делать кто-то. Делегируй 2 из них по матрице.', action: 'Модуль 5, «Матрица делегирования»' },
+    { icon: '🎯', title: 'Развивай людей', desc: 'Составь IDP для каждого прямого подчинённого в течение месяца. Проведи встречу по каждому.', action: 'Модуль 5, «Конструктор IDP»' },
+    { icon: '👂', title: 'Смещай фокус с задач на людей', desc: 'На следующих 1-on-1 начинай с «как ты?», а не с «что по задачам?». 70% времени — сотрудник.', action: 'Модуль 3, «Повестка и подготовка»' }
+  ],
+  mentor: [
+    { icon: '⚔️', title: 'Не давай лишних шансов', desc: 'Если сотрудник токсичен — считай индекс и действуй. Пройди модуль 1, раздел «Диагностика».', action: 'Модуль 1, «Калькулятор токсичности»' },
+    { icon: '💰', title: 'Говори о деньгах первым', desc: 'Не жди запроса. Раз в квартал инициируй разговор о компенсации с каждым ключевым сотрудником.', action: 'Модуль 4, «Скрипты для 4 сценариев»' },
+    { icon: '📏', title: 'Внедри операционную дисциплину', desc: 'Все задачи, которые ты делегируешь, проверяй по SMART. Используй чекер из модуля 5.', action: 'Модуль 5, «SMART-чекер задач»' }
+  ],
+  balanced: [
+    { icon: '🎯', title: 'Выбери специализацию', desc: 'Определи, какое направление тебе ближе: люди, процессы, стратегия. Углубись в 2 модуля по выбору.', action: 'Перечитай карту курса и выбери 2 модуля' },
+    { icon: '🎓', title: 'Найди ментора', desc: 'Тебе нужен тот, кто на уровень выше. Ищи в индустрии или внутри компании. Встречи раз в месяц.', action: 'Запланируй первую встречу в течение 2 недель' },
+    { icon: '📚', title: 'Начни преподавать', desc: 'Проведи внутреннюю презентацию для коллег-руководителей по любому модулю. Лучший способ закрепить — научить.', action: 'Запланируй выступление в течение месяца' }
+  ],
+  intuitive: [
+    { icon: '📐', title: 'Изучи фреймворки', desc: 'Твоя интуиция сильна, но ей нужна опора. Пройди все модули последовательно, фиксируя инструменты.', action: 'Составь конспект по каждому модулю' },
+    { icon: '💰', title: 'Внедри систему оплаты', desc: 'Твоя харизма не заменит прозрачности. Собери конструктор оплаты и представь команде.', action: 'Модуль 4, «Конструктор системы оплаты»' },
+    { icon: '📅', title: 'Добавь дисциплины', desc: 'Запланируй регулярные 1-on-1 в календарь. Даже если «и так всё ок» — система важнее интуиции.', action: 'Модуль 3, «Повестка и подготовка»' }
+  ]
+};
+
+try {
+  const saved = JSON.parse(localStorage.getItem('module6_progress') || '{}');
+  if (saved.completed) completedSections = new Set(saved.completed);
+} catch(e){}
+
+/* ═══════════════════════ NAVIGATION ═══════════════════════ */
+function goTo(idx) {
+  currentSection = idx;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.section[data-idx="${idx}"]`).classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-section="${idx}"]`).classList.add('active');
+
+  const titles = ['Карта курса', 'Финальный тест', 'Твой профиль', 'Карта развития', 'Сертификат'];
+  document.getElementById('topSub').textContent = `Раздел ${idx+1} из ${TOTAL_SECTIONS} · ${titles[idx]}`;
+
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  if (idx === 0) renderCourseMap();
+  if (idx === 1 && !testInited) initTest();
+
+  document.getElementById('sidebar').classList.remove('mobile-open');
+}
+
+function completeAndGo(idx) {
+  completedSections.add(currentSection);
+  saveProgress();
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (completedSections.has(parseInt(n.dataset.section))) n.classList.add('completed');
+  });
+  goTo(idx);
+}
+
+function updateProgress() {
+  const pct = ((currentSection + 1) / TOTAL_SECTIONS) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function saveProgress() {
+  try {
+    localStorage.setItem('module6_progress', JSON.stringify({
+      completed: [...completedSections]
+    }));
+  } catch(e){}
+}
+
+function toggleMobile() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+}
+
+/* ═══════════════════════ COURSE MAP ═══════════════ */
+function renderCourseMap() {
+  const map = document.getElementById('courseMap');
+  let html = '';
+  courseModules.forEach(m => {
+    // Check if module completed by looking at its localStorage
+    let completed = false;
+    let score = null;
+    try {
+      const data = JSON.parse(localStorage.getItem(m.storageKey) || '{}');
+      // Consider completed if at least 4 sections done
+      if (data.completed && data.completed.length >= 4) completed = true;
+    } catch(e){}
+
+    html += `<div class="map-node ${completed ? 'completed' : ''}">
+      <div class="map-icon">${m.icon}</div>
+      <div class="map-num">Модуль ${m.num}</div>
+      <div class="map-title">${m.title}</div>
+      ${completed ? '<div class="map-score"><strong>✓ Пройден</strong></div>' : '<div class="map-score">Не завершён</div>'}
+    </div>`;
+  });
+  map.innerHTML = html;
+}
+
+/* ═══════════════════════ FINAL TEST ═══════════════ */
+let testInited = false;
+
+function initTest() {
+  testInited = true;
+  const box = document.getElementById('testBox');
+  let html = '';
+  testQuestions.forEach((q, qi) => {
+    html += `<div class="test-question" data-qi="${qi}">
+      <div class="test-q-head">
+        <div class="test-q-num">Вопрос ${qi+1} из ${testQuestions.length}</div>
+        <div class="test-q-module">Модуль ${q.m}</div>
+      </div>
+      <div class="test-q-text">${q.q}</div>
+      <div class="test-options">`;
+    q.opts.forEach((o, oi) => {
+      html += `<button class="test-option" data-qi="${qi}" data-oi="${oi}" onclick="pickTest(${qi}, ${oi})">${o.t}</button>`;
+    });
+    html += `</div></div>`;
+  });
+  box.innerHTML = html;
+}
+
+function pickTest(qi, oi) {
+  const q = testQuestions[qi];
+  const o = q.opts[oi];
+
+  // Prevent re-answering
+  const btns = document.querySelectorAll(`.test-option[data-qi="${qi}"]`);
+  if (btns[0].disabled) return;
+  btns.forEach(b => b.disabled = true);
+
+  btns[oi].classList.add(o.c ? 'correct' : 'wrong');
+  if (!o.c) {
+    q.opts.forEach((opt, i) => { if (opt.c) btns[i].classList.add('correct'); });
+    playBad();
+  } else {
+    playGood();
+  }
+
+  testAnswers[qi] = { module: q.m, correct: o.c };
+
+  // Update progress
+  const answered = Object.keys(testAnswers).length;
+  document.getElementById('testAnswered').textContent = answered;
+  document.getElementById('testProgressFill').style.width = (answered / testQuestions.length * 100) + '%';
+
+  if (answered === testQuestions.length) {
+    document.getElementById('testFinish').classList.remove('hidden');
+    setTimeout(() => {
+      document.getElementById('testFinish').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  }
+}
+
+/* ═══════════════════════ PROFILE ═══════════════ */
+function showProfile() {
+  // Calculate scores per module
+  const moduleScores = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const moduleMax = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+  testQuestions.forEach((q, qi) => {
+    moduleMax[q.m]++;
+    if (testAnswers[qi] && testAnswers[qi].correct) {
+      moduleScores[q.m]++;
+    }
+  });
+
+  // Determine archetype based on pattern of strengths/weaknesses
+  const archetype = determineArchetype(moduleScores, moduleMax);
+  const p = profiles[archetype];
+
+  document.getElementById('profileIcon').textContent = p.icon;
+  document.getElementById('profileTitle').textContent = p.title;
+  document.getElementById('profileSubtitle').textContent = p.subtitle;
+  document.getElementById('profileDesc').textContent = p.desc;
+
+  // Bars
+  const moduleNames = { 1: 'Жёсткие решения', 2: 'Обратная связь', 3: '1-on-1 и коучинг', 4: 'Деньги', 5: 'Делегирование' };
+  const moduleColors = { 1: 'var(--red)', 2: 'var(--purple)', 3: 'var(--orange)', 4: 'var(--gold)', 5: 'var(--emerald)' };
+  let barsHtml = '';
+  for (let m = 1; m <= 5; m++) {
+    const pct = Math.round((moduleScores[m] / moduleMax[m]) * 100);
+    barsHtml += `<div class="profile-bar-row">
+      <div class="profile-bar-label">${moduleNames[m]}</div>
+      <div class="profile-bar-track"><div class="profile-bar-fill" style="background:${moduleColors[m]}" data-width="${pct}%"></div></div>
+      <div class="profile-bar-value">${pct}%</div>
+    </div>`;
+  }
+  document.getElementById('profileBars').innerHTML = barsHtml;
+
+  // Strengths & Growth
+  let strengthsHtml = '<h4>💪 Твои сильные стороны</h4><ul>';
+  p.strengths.forEach(s => { strengthsHtml += `<li><span style="color:var(--green)">✓</span>${s}</li>`; });
+  strengthsHtml += '</ul>';
+  document.getElementById('profileStrengths').innerHTML = strengthsHtml;
+
+  let growthHtml = '<h4>🌱 Зоны роста</h4><ul>';
+  p.growth.forEach(g => { growthHtml += `<li><span style="color:var(--yellow)">→</span>${g}</li>`; });
+  growthHtml += '</ul>';
+  document.getElementById('profileGrowth').innerHTML = growthHtml;
+
+  // Render development map
+  renderDevMap(archetype);
+
+  document.getElementById('profileCard').classList.add('show');
+
+  setTimeout(() => {
+    document.querySelectorAll('.profile-bar-fill').forEach(f => {
+      f.style.width = f.dataset.width;
+    });
+  }, 100);
+
+  completeAndGo(2);
+}
+
+function determineArchetype(scores, max) {
+  // Normalize to percentages
+  const pct = {};
+  for (let m = 1; m <= 5; m++) {
+    pct[m] = scores[m] / max[m];
+  }
+
+  // Scoring for each archetype
+  const archScores = {
+    architect: pct[1] * 2 + pct[4] * 1.5 + (1 - pct[2]) * 0.5,
+    diplomat: pct[2] * 2 + pct[3] * 1.5 + (1 - pct[1]) * 0.5,
+    operator: pct[5] * 1.5 + pct[4] + (1 - pct[3]) * 0.5,
+    mentor: pct[3] * 2 + pct[5] * 1.5 + (1 - pct[1]) * 0.5,
+    balanced: (pct[1] + pct[2] + pct[3] + pct[4] + pct[5]) / 5 * 3,
+    intuitive: (Math.max(...Object.values(pct)) - Math.min(...Object.values(pct))) * 2
+  };
+
+  // Find max
+  let maxArch = 'balanced';
+  let maxScore = -1;
+  Object.entries(archScores).forEach(([arch, score]) => {
+    if (score > maxScore) {
+      maxScore = score;
+      maxArch = arch;
+    }
+  });
+
+  // If all scores very close — balanced
+  const values = Object.values(pct);
+  const spread = Math.max(...values) - Math.min(...values);
+  if (spread < 0.25) return 'balanced';
+
+  return maxArch;
+}
+
+/* ═══════════════════════ DEVELOPMENT MAP ═══════════════ */
+function renderDevMap(archetype) {
+  const recs = devRecommendations[archetype];
+  const grid = document.getElementById('devGrid');
+  let html = '';
+  recs.forEach(r => {
+    html += `<div class="dev-card">
+      <div class="dev-card-header">
+        <div class="dev-card-icon">${r.icon}</div>
+        <div class="dev-card-title">${r.title}</div>
+      </div>
+      <div class="dev-card-desc">${r.desc}</div>
+      <div class="dev-card-action">📍 ${r.action}</div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+/* ═══════════════════════ CERTIFICATE ═══════════════ */
+function updateCert() {
+  const name = document.getElementById('certName').value.trim() || 'Имя Фамилия';
+  document.getElementById('certNameText').textContent = name;
+
+  // Generate unique ID based on name + date
+  const date = new Date();
+  const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long', year: 'numeric' });
+  document.getElementById('certDateText').textContent = dateStr;
+
+  const id = 'NT-' + date.getFullYear() + '-' + Math.abs(hashCode(name + date.toISOString())).toString(16).toUpperCase().padStart(6, '0').slice(0, 6);
+  document.getElementById('certIdText').textContent = 'ID: ' + id;
+}
+
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return hash;
+}
+
+function downloadCert() {
+  const name = document.getElementById('certName').value.trim();
+  if (!name) {
+    alert('Сначала введи своё имя');
+    document.getElementById('certName').focus();
+    return;
+  }
+
+  const svg = document.getElementById('certSvg');
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const blob = new Blob([svgData], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Сертификат_${name.replace(/\s+/g, '_')}.svg`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  playGood();
+}
+
+function copyCertLink() {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('Ссылка скопирована! Поделись с коллегами.');
+  });
+}
+
+/* ═══════════════════════ AUDIO ═══════════════ */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+function playGood() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.06;
+    o.frequency.setValueAtTime(523, audioCtx.currentTime);
+    o.frequency.setValueAtTime(659, audioCtx.currentTime + 0.1);
+    o.frequency.setValueAtTime(784, audioCtx.currentTime + 0.2);
+    o.start(); o.stop(audioCtx.currentTime + 0.3);
+  } catch(e){}
+}
+function playBad() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.05;
+    o.frequency.setValueAtTime(180, audioCtx.currentTime);
+    o.start(); o.stop(audioCtx.currentTime + 0.22);
+  } catch(e){}
+}
+function playClick() {
+  try {
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine'; o.connect(g); g.connect(audioCtx.destination);
+    g.gain.value = 0.03;
+    o.frequency.setValueAtTime(1200, audioCtx.currentTime);
+    o.start(); o.stop(audioCtx.currentTime + 0.03);
+  } catch(e){}
+}
+
+/* ═══════════════════════ INIT ═══════════════ */
+renderCourseMap();
+updateCert();
+updateProgress();
+
+document.querySelectorAll('.nav-item').forEach(n => {
+  if (completedSections.has(parseInt(n.dataset.section))) n.classList.add('completed');
+});
+</script>
+</body>
+</html>

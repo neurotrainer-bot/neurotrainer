@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Нейро-Тренер · Мой курс</title>
+<style>
+  :root {
+    --bg: #0b0b1a;
+    --bg2: #12122a;
+    --bg3: #1a1a35;
+    --cyan: #00f0ff;
+    --cyan-dim: rgba(0,240,255,.12);
+    --green: #00ff88;
+    --green-dim: rgba(0,255,136,.12);
+    --red: #ff3366;
+    --red-dim: rgba(255,51,102,.12);
+    --yellow: #ffaa00;
+    --yellow-dim: rgba(255,170,0,.12);
+    --emerald: #10d49a;
+    --emerald-dim: rgba(16,212,154,.12);
+    --purple: #b366ff;
+    --purple-dim: rgba(179,102,255,.12);
+    --orange: #ff8844;
+    --orange-dim: rgba(255,136,68,.12);
+    --gold: #ffcc33;
+    --gold-dim: rgba(255,204,51,.12);
+    --pink: #ff3cac;
+    --blue: #2b86c5;
+    --sunset: linear-gradient(135deg, #ff3cac 0%, #784ba0 50%, #2b86c5 100%);
+    --sunset-dim: rgba(255,60,172,.1);
+    --text: #e0e0e8;
+    --text-dim: #7a7a9a;
+    --border: rgba(255,255,255,.08);
+    --radius: 16px;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, rgba(255,60,172,.08), rgba(43,134,197,.08));
+    border-bottom: 1px solid var(--border);
+    padding: 32px 20px 40px;
+    text-align: center;
+  }
+  .header-logo {
+    width: 64px; height: 64px;
+    margin: 0 auto 16px;
+    background: var(--sunset);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 32px rgba(255,60,172,.4);
+  }
+  .header-logo svg { width: 32px; height: 32px; }
+  .header-title {
+    font-size: 28px; font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .header-title span {
+    background: var(--sunset);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-subtitle {
+    font-size: 15px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+
+  /* ── Overall Progress ── */
+  .overall-progress {
+    max-width: 500px;
+    margin: 0 auto;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .overall-progress-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .overall-progress-label {
+    font-size: 13px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    font-weight: 700;
+  }
+  .overall-progress-value {
+    font-size: 24px; font-weight: 800;
+    background: var(--sunset);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .overall-progress-bar {
+    height: 10px;
+    background: rgba(255,255,255,.06);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .overall-progress-fill {
+    height: 100%;
+    background: var(--sunset);
+    border-radius: 99px;
+    width: 0%;
+    transition: width 1.2s cubic-bezier(.22,1,.36,1);
+    box-shadow: 0 0 12px rgba(255,60,172,.4);
+  }
+  .overall-progress-stats {
+    display: flex; justify-content: space-around;
+    font-size: 12px; color: var(--text-dim);
+  }
+  .overall-progress-stats strong {
+    color: var(--text);
+    font-size: 16px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* ── Main Container ── */
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* ── Quick Actions ── */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .quick-action {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text);
+  }
+  .quick-action:hover {
+    border-color: var(--pink);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255,60,172,.15);
+  }
+  .quick-action-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .quick-action-title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  /* ── Section Title ── */
+  .section-title {
+    font-size: 20px; font-weight: 700;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title-icon {
+    font-size: 24px;
+  }
+
+  /* ── Module Cards ── */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  .module-card {
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    cursor: pointer;
+    transition: all .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .module-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.3);
+  }
+  .module-card.completed {
+    border-color: var(--green);
+    background: linear-gradient(135deg, rgba(0,255,136,.05), rgba(0,240,255,.05));
+  }
+  .module-card.completed::before {
+    content: '✓';
+    position: absolute;
+    top: 12px; right: 12px;
+    width: 28px; height: 28px;
+    background: var(--green);
+    color: var(--bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+  }
+  .module-card-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+  }
+  .module-icon {
+    font-size: 36px;
+    flex-shrink: 0;
+  }
+  .module-num {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+  }
+  .module-title {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .module-desc {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .module-progress {
+    margin-bottom: 12px;
+  }
+  .module-progress-header {
+    display: flex; justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .module-progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,.06);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .module-progress-fill {
+    height: 100%;
+    border-radius: 99px;
+    width: 0%;
+    transition: width .8s ease;
+  }
+  .module-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+  }
+  .module-btn:hover {
+    background: var(--sunset-dim);
+    border-color: var(--pink);
+    color: var(--pink);
+  }
+  .module-card.completed .module-btn {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* ── Badges ── */
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  .badge {
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 12px;
+    text-align: center;
+    transition: all .3s;
+    position: relative;
+  }
+  .badge.earned {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(255,204,51,.08), rgba(255,170,0,.08));
+    box-shadow: 0 0 20px rgba(255,204,51,.15);
+  }
+  .badge.earned::after {
+    content: '✓';
+    position: absolute;
+    top: 6px; right: 6px;
+    width: 18px; height: 18px;
+    background: var(--gold);
+    color: var(--bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+  }
+  .badge-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+    filter: grayscale(100%) opacity(.3);
+    transition: filter .3s;
+  }
+  .badge.earned .badge-icon {
+    filter: none;
+  }
+  .badge-title {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .badge-desc {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  /* ── Profile Card ── */
+  .profile-card {
+    background: linear-gradient(135deg, rgba(255,60,172,.08), rgba(43,134,197,.08));
+    border: 1px solid rgba(255,60,172,.2);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 40px;
+    display: none;
+  }
+  .profile-card.show { display: block; }
+  .profile-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 16px;
+  }
+  .profile-icon {
+    font-size: 48px;
+  }
+  .profile-info {
+    flex: 1;
+  }
+  .profile-title {
+    font-size: 20px; font-weight: 800;
+    background: var(--sunset);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+  .profile-subtitle {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .profile-btn {
+    padding: 10px 20px;
+    background: var(--sunset);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .profile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(255,60,172,.3);
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 32px 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+  }
+  .footer a {
+    color: var(--pink);
+    text-decoration: none;
+  }
+  .footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .header-title { font-size: 24px; }
+    .modules-grid { grid-template-columns: 1fr; }
+    .badges-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate {
+    animation: fadeUp .5s ease both;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<div class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2 L15 9 L22 10 L17 15 L18 22 L12 19 L6 22 L7 15 L2 10 L9 9 Z" fill="#fff"/>
+    </svg>
+  </div>
+  <h1 class="header-title">Мой путь <span>лидера</span></h1>
+  <p class="header-subtitle">Интерактивный курс «Анатомия сложных диалогов»</p>
+
+  <div class="overall-progress">
+    <div class="overall-progress-header">
+      <div class="overall-progress-label">Общий прогресс</div>
+      <div class="overall-progress-value" id="overallPct">0%</div>
+    </div>
+    <div class="overall-progress-bar">
+      <div class="overall-progress-fill" id="overallFill"></div>
+    </div>
+    <div class="overall-progress-stats">
+      <div><strong id="modulesCompleted">0</strong>модулей пройдено</div>
+      <div><strong id="badgesEarned">0</strong>бейджей получено</div>
+      <div><strong id="timeSpent">0ч</strong>потрачено</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="container">
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a href="#" class="quick-action" id="continueBtn" onclick="continueLast(event)">
+      <div class="quick-action-icon">▶️</div>
+      <div class="quick-action-title">Продолжить обучение</div>
+    </a>
+    <a href="module6.html" class="quick-action" id="certBtn">
+      <div class="quick-action-icon">🎓</div>
+      <div class="quick-action-title">Получить сертификат</div>
+    </a>
+    <a href="#" class="quick-action" onclick="resetProgress(event)">
+      <div class="quick-action-icon">🔄</div>
+      <div class="quick-action-title">Сбросить прогресс</div>
+    </a>
+  </div>
+
+  <!-- Profile Card (if completed test) -->
+  <div class="profile-card" id="profileCard">
+    <div class="profile-header">
+      <div class="profile-icon" id="profileIcon"></div>
+      <div class="profile-info">
+        <div class="profile-title" id="profileTitle"></div>
+        <div class="profile-subtitle" id="profileSubtitle"></div>
+      </div>
+      <a href="module6.html#profile" class="profile-btn">Мой профиль →</a>
+    </div>
+  </div>
+
+  <!-- Modules -->
+  <div class="section-title">
+    <span class="section-title-icon">📚</span>
+    Модули курса
+  </div>
+  <div class="modules-grid" id="modulesGrid"></div>
+
+  <!-- Badges -->
+  <div class="section-title">
+    <span class="section-title-icon">🏆</span>
+    Достижения
+  </div>
+  <div class="badges-grid" id="badgesGrid"></div>
+
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<div class="footer">
+  <p>© 2026 Нейро-Тренер · Все права защищены</p>
+  <p style="margin-top:8px">Вопросы? <a href="mailto:support@neurotrainer.ru">support@neurotrainer.ru</a></p>
+</div>
+
+<script>
+/* ═══════════════════════ DATA ═══════════════ */
+const modules = [
+  {
+    num: 1,
+    icon: '🔥',
+    title: 'Увольнение токсичного star-специалиста',
+    desc: 'Самый сложный разговор в жизни руководителя. Калькулятор токсичности, симулятор, скрипты.',
+    file: 'module1.html',
+    color: 'var(--red)',
+    storageKey: 'module1_progress',
+    totalSections: 6
+  },
+  {
+    num: 2,
+    icon: '👴',
+    title: 'Обратная связь старшему по опыту',
+    desc: 'Фреймворк SBI+, симулятор «Ветеран», готовые скрипты для сложных иерархий.',
+    file: 'module2.html',
+    color: 'var(--purple)',
+    storageKey: 'module2_progress',
+    totalSections: 6
+  },
+  {
+    num: 3,
+    icon: '🎯',
+    title: '1-on-1, после которых люди сами предлагают решения',
+    desc: 'Аудит встреч, GROW-тренажёр, банк вопросов, симулятор «Пассивный сотрудник».',
+    file: 'module3.html',
+    color: 'var(--orange)',
+    storageKey: 'module3_progress',
+    totalSections: 6
+  },
+  {
+    num: 4,
+    icon: '💰',
+    title: 'Разговор о деньгах без шантажа',
+    desc: 'Калькулятор рынка, конструктор системы оплаты, симулятор с 3 типами сотрудников.',
+    file: 'module4.html',
+    color: 'var(--gold)',
+    storageKey: 'module4_progress',
+    totalSections: 6
+  },
+  {
+    num: 5,
+    icon: '🌱',
+    title: 'Развитие персонала и делегирование',
+    desc: 'Матрица делегирования, 4 стиля лидерства, конструктор IDP, SMART-чекер.',
+    file: 'module5.html',
+    color: 'var(--emerald)',
+    storageKey: 'module5_progress',
+    totalSections: 6
+  },
+  {
+    num: 6,
+    icon: '🎓',
+    title: 'Финальная интеграция и сертификат',
+    desc: 'Тест из 15 вопросов, персональный профиль, карта развития, именной сертификат.',
+    file: 'module6.html',
+    color: 'var(--pink)',
+    storageKey: 'module6_progress',
+    totalSections: 6
+  }
+];
+
+const badges = [
+  { id: 'first_step', icon: '👣', title: 'Первый шаг', desc: 'Начал первый модуль', condition: (data) => data[1]?.completed?.length > 0 },
+  { id: 'module_1', icon: '🔥', title: 'Укротитель токсичных', desc: 'Прошёл модуль 1', condition: (data) => data[1]?.completed?.length >= 5 },
+  { id: 'module_2', icon: '👴', title: 'Дипломат', desc: 'Прошёл модуль 2', condition: (data) => data[2]?.completed?.length >= 5 },
+  { id: 'module_3', icon: '🎯', title: 'Мастер 1-on-1', desc: 'Прошёл модуль 3', condition: (data) => data[3]?.completed?.length >= 5 },
+  { id: 'module_4', icon: '💰', title: 'Финансовый гуру', desc: 'Прошёл модуль 4', condition: (data) => data[4]?.completed?.length >= 5 },
+  { id: 'module_5', icon: '🌱', title: 'Наставник', desc: 'Прошёл модуль 5', condition: (data) => data[5]?.completed?.length >= 5 },
+  { id: 'module_6', icon: '🎓', title: 'Выпускник', desc: 'Прошёл финальный тест', condition: (data) => data[6]?.completed?.length >= 5 },
+  { id: 'perfect_score', icon: '💎', title: 'Перфекционист', desc: '100% в финальном тесте', condition: (data) => data[6]?.perfectTest },
+  { id: 'all_modules', icon: '🏆', title: 'Чемпион', desc: 'Прошёл все 6 модулей', condition: (data) => {
+    let count = 0;
+    for (let i = 1; i <= 6; i++) {
+      if (data[i]?.completed?.length >= 5) count++;
+    }
+    return count === 6;
+  }},
+  { id: 'speed_run', icon: '⚡', title: 'Скоростной', desc: 'Прошёл курс за 7 дней', condition: (data) => data.firstStart && (Date.now() - data.firstStart) < 7 * 24 * 60 * 60 * 1000 && badges.find(b => b.id === 'all_modules').condition(data) },
+  { id: 'certificate', icon: '📜', title: 'Сертифицирован', desc: 'Получил сертификат', condition: (data) => data.certificateName },
+  { id: 'explorer', icon: '🔍', title: 'Исследователь', desc: 'Открыл все разделы', condition: (data) => {
+    let total = 0;
+    for (let i = 1; i <= 6; i++) {
+      total += data[i]?.completed?.length || 0;
+    }
+    return total >= 30;
+  }}
+];
+
+/* ═══════════════════════ LOAD DATA ═══════════════ */
+function loadAllData() {
+  const data = {};
+  modules.forEach(m => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(m.storageKey) || '{}');
+      data[m.num] = saved;
+    } catch(e) {
+      data[m.num] = {};
+    }
+  });
+
+  // Load global data
+  try {
+    const global = JSON.parse(localStorage.getItem('neurotrainer_global') || '{}');
+    data.global = global;
+  } catch(e) {
+    data.global = {};
+  }
+
+  return data;
+}
+
+function saveGlobalData(key, value) {
+  try {
+    const global = JSON.parse(localStorage.getItem('neurotrainer_global') || '{}');
+    global[key] = value;
+    localStorage.setItem('neurotrainer_global', JSON.stringify(global));
+  } catch(e){}
+}
+
+/* ═══════════════════════ RENDER ═══════════════ */
+function renderDashboard() {
+  const data = loadAllData();
+
+  // Calculate overall progress
+  let totalCompleted = 0;
+  let totalSections = 0;
+  modules.forEach(m => {
+    totalSections += m.totalSections;
+    totalCompleted += data[m.num]?.completed?.length || 0;
+  });
+  const overallPct = Math.round((totalCompleted / totalSections) * 100);
+
+  document.getElementById('overallPct').textContent = overallPct + '%';
+  document.getElementById('overallFill').style.width = overallPct + '%';
+
+  // Count completed modules
+  let modulesCompleted = 0;
+  modules.forEach(m => {
+    if (data[m.num]?.completed?.length >= 5) modulesCompleted++;
+  });
+  document.getElementById('modulesCompleted').textContent = modulesCompleted;
+
+  // Count badges
+  let badgesEarned = 0;
+  badges.forEach(b => {
+    if (b.condition(data)) badgesEarned++;
+  });
+  document.getElementById('badgesEarned').textContent = badgesEarned;
+
+  // Estimate time (rough: 15 min per section)
+  const timeSpent = Math.round(totalCompleted * 15 / 60);
+  document.getElementById('timeSpent').textContent = timeSpent + 'ч';
+
+  // Render modules
+  renderModules(data);
+
+  // Render badges
+  renderBadges(data);
+
+  // Show profile if exists
+  if (data.global.profile) {
+    showProfile(data.global.profile);
+  }
+
+  // Update continue button
+  updateContinueButton(data);
+
+  // Track first start
+  if (!data.global.firstStart) {
+    saveGlobalData('firstStart', Date.now());
+  }
+}
+
+function renderModules(data) {
+  const grid = document.getElementById('modulesGrid');
+  let html = '';
+
+  modules.forEach((m, idx) => {
+    const completed = data[m.num]?.completed?.length || 0;
+    const pct = Math.round((completed / m.totalSections) * 100);
+    const isCompleted = completed >= 5;
+
+    html += `
+      <div class="module-card ${isCompleted ? 'completed' : ''}" style="animation-delay: ${idx * 0.05}s">
+        <div class="module-card-header">
+          <div class="module-icon">${m.icon}</div>
+          <div>
+            <div class="module-num">Модуль ${m.num}</div>
+            <div class="module-title">${m.title}</div>
+          </div>
+        </div>
+        <div class="module-desc">${m.desc}</div>
+        <div class="module-progress">
+          <div class="module-progress-header">
+            <span>Прогресс</span>
+            <span>${pct}%</span>
+          </div>
+          <div class="module-progress-bar">
+            <div class="module-progress-fill" style="background:${m.color}" data-width="${pct}%"></div>
+          </div>
+        </div>
+        <a href="${m.file}" class="module-btn">
+          ${isCompleted ? '✓ Пройти снова' : completed > 0 ? 'Продолжить →' : 'Начать модуль →'}
+        </a>
+      </div>
+    `;
+  });
+
+  grid.innerHTML = html;
+
+  // Animate progress bars
+  setTimeout(() => {
+    document.querySelectorAll('.module-progress-fill').forEach(f => {
+      f.style.width = f.dataset.width;
+    });
+  }, 100);
+}
+
+function renderBadges(data) {
+  const grid = document.getElementById('badgesGrid');
+  let html = '';
+
+  badges.forEach((b, idx) => {
+    const earned = b.condition(data);
+    html += `
+      <div class="badge ${earned ? 'earned' : ''}" style="animation-delay: ${idx * 0.03}s">
+        <div class="badge-icon">${b.icon}</div>
+        <div class="badge-title">${b.title}</div>
+        <div class="badge-desc">${b.desc}</div>
+      </div>
+    `;
+  });
+
+  grid.innerHTML = html;
+}
+
+function showProfile(profile) {
+  const card = document.getElementById('profileCard');
+  document.getElementById('profileIcon').textContent = profile.icon;
+  document.getElementById('profileTitle').textContent = profile.title;
+  document.getElementById('profileSubtitle').textContent = profile.subtitle;
+  card.classList.add('show');
+}
+
+function updateContinueButton(data) {
+  const btn = document.getElementById('continueBtn');
+  
+  // Find last incomplete module
+  let lastModule = null;
+  for (let i = 1; i <= 6; i++) {
+    const completed = data[i]?.completed?.length || 0;
+    if (completed < 5) {
+      lastModule = modules[i - 1];
+      break;
+    }
+  }
+
+  if (lastModule) {
+    btn.href = lastModule.file;
+    btn.querySelector('.quick-action-title').textContent = `Продолжить: Модуль ${lastModule.num}`;
+  } else {
+    btn.href = 'module6.html';
+    btn.querySelector('.quick-action-title').textContent = 'Открыть сертификат';
+  }
+}
+
+/* ═══════════════════════ ACTIONS ═══════════════ */
+function continueLast(e) {
+  e.preventDefault();
+  const btn = document.getElementById('continueBtn');
+  window.location.href = btn.href;
+}
+
+function resetProgress(e) {
+  e.preventDefault();
+  if (confirm('Ты уверен? Весь прогресс будет удалён.')) {
+    modules.forEach(m => {
+      localStorage.removeItem(m.storageKey);
+    });
+    localStorage.removeItem('neurotrainer_global');
+    location.reload();
+  }
+}
+
+/* ═══════════════════════ INIT ═══════════════ */
+renderDashboard();
+</script>
+
+</body>
+</html>
